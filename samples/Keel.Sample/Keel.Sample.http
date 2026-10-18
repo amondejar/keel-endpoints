@@ -2,7 +2,7 @@
 # Start it first:  dotnet run --project samples/Keel.Sample
 # Open this file in Visual Studio, Rider or VS Code (REST Client extension) and send each request.
 
-@host = http://localhost:5000
+@host = http://localhost:55796
 
 ### 1. Public endpoint ([AllowAnonymous]) -> 200
 GET {{host}}/api/health
