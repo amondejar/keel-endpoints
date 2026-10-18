@@ -55,7 +55,7 @@ check "keel-api: health"                 200 "$(status http://127.0.0.1:5097/api
 check "keel-api: create todo"            201 "$(status -H 'Content-Type: application/json' -d '{"title":"x"}' http://127.0.0.1:5097/api/todos)"
 check "keel-api: validation"             400 "$(status -H 'Content-Type: application/json' -d '{"title":""}' http://127.0.0.1:5097/api/todos)"
 check "keel-slice put: body validation"  400 "$(status -X PUT -H 'Content-Type: application/json' -d '{"name":""}' http://127.0.0.1:5097/api/todos/1)"
-check "keel-api: scalar page"            200 "$(status http://127.0.0.1:5097/scalar)"
+check "keel-api: scalar page"            200 "$(status -L http://127.0.0.1:5097/scalar)"
 kill $pid 2>/dev/null || true
 
 # 2. keel-api --aot, Native AOT
