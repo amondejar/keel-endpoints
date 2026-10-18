@@ -28,7 +28,8 @@ app.MapKeelEndpoints("/keel");
 #pragma warning disable IL2026, IL3050 // the reflective registration is what is being measured here
 app.MapKeelEndpoints(typeof(Program).Assembly, "/reflective");
 #pragma warning restore IL2026, IL3050
-await app.StartAsync();
+// The server is never started: request delegates are invoked directly, so no port is opened and
+// launchSettings.json (an https:// URL added by an IDE, say) does not matter.
 
 var scenarios = new[]
 {
@@ -65,7 +66,6 @@ foreach (var scenario in scenarios)
     if (!double.IsNaN(check) && ratio > 1 + check / 100) failed = true;
 }
 
-await app.StopAsync();
 if (failed)
 {
     Console.WriteLine($"\nFAIL: a Keel endpoint is more than {check}% slower than the Minimal API equivalent.");
@@ -129,7 +129,8 @@ namespace Keel.Endpoints.Benchmarks
         public static Invoker Create(WebApplication app, Scenario scenario, string prefix)
         {
             var pattern = $"/{prefix}/{scenario.Route}";
-            var endpoint = app.Services.GetRequiredService<EndpointDataSource>().Endpoints
+            // The application's own data sources: without a started server, the global one is not wired up yet.
+            var endpoint = ((IEndpointRouteBuilder)app).DataSources.SelectMany(d => d.Endpoints)
                 .OfType<RouteEndpoint>()
                 .Single(e => string.Equals(e.RoutePattern.RawText?.TrimEnd('/'), pattern, StringComparison.OrdinalIgnoreCase)
                              && e.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods.Contains(scenario.Method) == true);
