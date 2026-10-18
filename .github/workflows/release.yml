@@ -1,6 +1,9 @@
 name: Release
 
-# Push a tag such as v0.1.0-preview.1 to publish. Requires the NUGET_API_KEY repository secret.
+# Push a tag such as v0.1.0-preview.1 to publish.
+# Uses NuGet Trusted Publishing (OIDC): no long-lived API key is stored in the repository.
+# Requires a Trusted Publishing policy on nuget.org for this repository and workflow file
+# (release.yml), and the NUGET_USER repository secret set to the nuget.org profile name.
 on:
   push:
     tags: ['v*']
@@ -8,6 +11,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # lets GitHub issue the OIDC token that NuGet/login exchanges
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -18,4 +24,13 @@ jobs:
       - run: dotnet build -c Release -p:Version=$VERSION
       - run: dotnet run -c Release --no-build --project tests/Keel.Endpoints.Tests
       - run: dotnet pack -c Release --no-build -p:Version=$VERSION -o artifacts
-      - run: dotnet nuget push "artifacts/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      # The temporary API key lives for one hour, so log in right before pushing.
+      - name: NuGet login (OIDC to temporary API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to nuget.org
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
