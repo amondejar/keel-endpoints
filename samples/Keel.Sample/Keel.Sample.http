@@ -1,0 +1,56 @@
+# Manual tour of the sample API.
+# Start it first:  dotnet run --project samples/Keel.Sample
+# Open this file in Visual Studio, Rider or VS Code (REST Client extension) and send each request.
+
+@host = http://localhost:5000
+
+### 1. Public endpoint ([AllowAnonymous]) -> 200
+GET {{host}}/api/health
+
+### 2. Protected endpoint without credentials -> 401 (group-level RequireAuthorization)
+GET {{host}}/api/invoices
+
+### 3. Create an invoice (contract read from the body) -> 201
+POST {{host}}/api/invoices
+X-Api-Key: demo
+Content-Type: application/json
+
+{ "customer": "Acme", "amount": 120 }
+
+### 4. Invalid contract -> 400 problem details from .NET 10 validation
+POST {{host}}/api/invoices
+X-Api-Key: demo
+Content-Type: application/json
+
+{ "customer": "", "amount": 0 }
+
+### 5. Get by id (route binding, Results<Ok, NotFound>) -> 200
+GET {{host}}/api/invoices/inv-1
+X-Api-Key: demo
+
+### 6. Unknown id -> 404
+GET {{host}}/api/invoices/nope
+X-Api-Key: demo
+
+### 7. List with a query filter -> 200
+GET {{host}}/api/invoices?status=open
+X-Api-Key: demo
+
+### 8. Route value + validated [FromBody] member -> 204
+PUT {{host}}/api/invoices/inv-1/customer
+X-Api-Key: demo
+Content-Type: application/json
+
+{ "customer": "Globex" }
+
+### 9. Delete as a normal user -> 403 (policy "admin" set in Configure)
+DELETE {{host}}/api/invoices/inv-1
+X-Api-Key: demo
+
+### 10. Delete as admin -> 204
+DELETE {{host}}/api/invoices/inv-1
+X-Api-Key: admin
+
+### 11. Server-Sent Events stream
+GET {{host}}/api/invoices/events?count=3
+X-Api-Key: demo

@@ -142,6 +142,9 @@ dotnet build
 dotnet run --project tests/Keel.Endpoints.Tests
 ```
 
+To try everything locally (sample API, analyzers, the package in your own project) see
+[docs/testing-locally.md](docs/testing-locally.md).
+
 Without access to nuget.org, add `-p:KeelOfflineRoslyn=true` to compile the analyzers against the
 Roslyn assemblies bundled with the .NET SDK.
 
