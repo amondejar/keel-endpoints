@@ -128,6 +128,18 @@ var response = await client.SendAsync<Invoices.Get.Endpoint, InvoiceView>(new Ge
 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 ```
 
+## FluentValidation
+
+Prefer FluentValidation over DataAnnotations? Add `Keel.Endpoints.FluentValidation`: an ordinary endpoint
+filter that runs each argument's registered `IValidator<T>` and returns the same `400` problem details.
+
+```csharp
+builder.Services.AddKeelFluentValidation(typeof(Program).Assembly);
+app.MapKeelEndpoints(typeof(Program).Assembly, "/api").RequireAuthorization().WithFluentValidation();
+```
+
+See [its README](src/Keel.Endpoints.FluentValidation/README.md).
+
 ## Roadmap
 
 - **0.2** Native AOT: a source generator for explicit registration.
