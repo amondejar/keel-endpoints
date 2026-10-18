@@ -3,7 +3,7 @@
 **One class per endpoint for ASP.NET Core Minimal APIs.** Binding, validation and OpenAPI stay
 native; authorization is fail-closed; analyzers catch route mistakes at build time.
 
-> **Status: 0.3 preview.** The API may change before 1.0. See the [roadmap](#roadmap).
+> **Status: 0.4 preview.** The API may change before 1.0. See the [roadmap](#roadmap).
 
 ```csharp
 namespace Billing.Invoices.Get;
@@ -217,6 +217,33 @@ var response = await client.SendAsync<Invoices.Get.Endpoint, InvoiceView>(new Ge
 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 ```
 
+## API manifest: breaking changes fail CI
+
+`api.manifest.json` records the HTTP surface clients depend on: every route, its authorization,
+parameters, body and responses, and the JSON shape of each type. One test keeps it honest:
+
+```csharp
+public class ApiManifestTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+{
+    [Fact]
+    public void Api_matches_its_manifest() => ApiManifest.Verify(factory.Services);
+}
+```
+
+The first run writes the file next to the test; commit it. From then on any API change fails the test
+with a list, and the manifest diff shows up in the pull request:
+
+```text
+breaking   POST api/invoices: request body.currency added as required
+breaking   GET api/invoices/{invoiceId}: response 200.status may now be null
+security   DELETE api/invoices/{invoiceId}: no longer requires policy 'admin'
+compatible GET api/invoices: response 200[].currency added
+```
+
+Accept intended changes with `KEEL_UPDATE_MANIFEST=1 dotnet test` (compatible changes only) or
+`KEEL_UPDATE_MANIFEST=all`, then commit the file. CI never sets it. The rules are in
+[docs/api-manifest.md](docs/api-manifest.md).
+
 ## FluentValidation
 
 Prefer FluentValidation over DataAnnotations? Add `Keel.Endpoints.FluentValidation`: an ordinary endpoint
@@ -233,7 +260,7 @@ See [its README](src/Keel.Endpoints.FluentValidation/README.md).
 
 - **0.2** Native AOT: generated registration (done, `0.2.0-preview`).
 - **0.3** Group configuration per folder, `dotnet new` templates, code fixes (done, `0.3.0-preview`).
-- **0.4** A route and contract manifest with breaking-change checks in CI.
+- **0.4** A route and contract manifest with breaking-change checks in CI (done, `0.4.0-preview`).
 - **1.0** Public API frozen for two previews, full docs, benchmark within 5% of a hand-written Minimal API.
 
 ## Building

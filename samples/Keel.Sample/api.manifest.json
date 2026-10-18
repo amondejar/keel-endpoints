@@ -1,0 +1,100 @@
+{
+  "format": 1,
+  "endpoints": {
+    "DELETE api/invoices/{invoiceId}": {
+      "operation": "InvoicesDelete",
+      "authorization": "required",
+      "policies": [
+        "admin"
+      ],
+      "path": {
+        "invoiceId": "string"
+      },
+      "responses": {
+        "204": ""
+      }
+    },
+    "GET api/health": {
+      "operation": "SampleHealth",
+      "authorization": "anonymous",
+      "responses": {
+        "200": "HealthStatus"
+      }
+    },
+    "GET api/invoices": {
+      "operation": "InvoicesList",
+      "authorization": "required",
+      "query": {
+        "Status": "string"
+      },
+      "responses": {
+        "200": "array<InvoiceView>"
+      }
+    },
+    "GET api/invoices/events": {
+      "operation": "InvoicesWatch",
+      "authorization": "required",
+      "query": {
+        "Count": "int32"
+      },
+      "responses": {
+        "200": "InvoiceEvent as text/event-stream"
+      }
+    },
+    "GET api/invoices/{invoiceId}": {
+      "operation": "InvoicesGet",
+      "authorization": "required",
+      "path": {
+        "invoiceId": "string"
+      },
+      "responses": {
+        "200": "InvoiceView",
+        "404": ""
+      }
+    },
+    "POST api/invoices": {
+      "operation": "InvoicesCreate",
+      "authorization": "required",
+      "body": "CreateInvoice (required)",
+      "responses": {
+        "201": "InvoiceView",
+        "400": "validation-problem"
+      }
+    },
+    "PUT api/invoices/{invoiceId}/customer": {
+      "operation": "InvoicesRename",
+      "authorization": "required",
+      "path": {
+        "invoiceId": "string"
+      },
+      "body": "RenameInvoiceBody (required)",
+      "responses": {
+        "204": "",
+        "400": "validation-problem",
+        "404": ""
+      }
+    }
+  },
+  "types": {
+    "CreateInvoice": {
+      "amount": "number",
+      "customer": "string (required)"
+    },
+    "HealthStatus": {
+      "status": "string"
+    },
+    "InvoiceEvent": {
+      "invoiceId": "string",
+      "kind": "string"
+    },
+    "InvoiceView": {
+      "amount": "number",
+      "customer": "string",
+      "id": "string",
+      "status": "string"
+    },
+    "RenameInvoiceBody": {
+      "customer": "string (required)"
+    }
+  }
+}

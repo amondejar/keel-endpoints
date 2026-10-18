@@ -19,6 +19,9 @@ internal sealed class SampleHost : IAsyncDisposable
         return new SampleHost(app, new Uri(address));
     }
 
+    /// <summary>The running application's services.</summary>
+    public IServiceProvider Services => _app.Services;
+
     public EndpointClient Client(string? apiKey = "demo")
     {
         var http = new HttpClient { BaseAddress = _baseAddress };

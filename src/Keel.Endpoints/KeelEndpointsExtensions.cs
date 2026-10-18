@@ -26,6 +26,9 @@ public static class KeelEndpointsExtensions
         // Builds the endpoint table at startup, so a configuration error (for example an endpoint
         // with no authorization decision) stops the host instead of surfacing on the first request.
         services.AddHostedService<EndpointTableVerifier>();
+
+        // ApiExplorer describes the endpoints for OpenAPI and for the API manifest in Keel.Endpoints.Testing.
+        services.AddEndpointsApiExplorer();
         return services;
     }
 

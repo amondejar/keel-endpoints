@@ -3,7 +3,21 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [0.3.0-preview.1] - Unreleased
+## [0.4.0-preview.1] - Unreleased
+
+### Added
+- **API manifest** (`Keel.Endpoints.Testing`): `ApiManifest.Create` describes every endpoint from
+  ApiExplorer (route, authorization, parameters, body, responses) with JSON shapes from the app's JSON
+  options; `ApiManifest.Compare` classifies each difference as breaking, security or compatible from the
+  client's side; `ApiManifest.Verify` checks the app against a committed `api.manifest.json` and fails the
+  test (and CI) on any difference. `KEEL_UPDATE_MANIFEST=1|all` accepts intended changes.
+- The sample's `api.manifest.json`, verified by the test suite.
+
+### Changed
+- `AddKeelEndpoints()` registers ApiExplorer (`AddEndpointsApiExplorer()`), which the manifest and the
+  OpenAPI document read.
+
+ - 2026-10-18
 
 ### Added
 - **Endpoint groups.** An `EndpointGroup` subclass configures every endpoint in its namespace and below
@@ -15,7 +29,7 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - **`Keel.Endpoints.Templates`**: `dotnet new keel-api` (optionally `--aot`) and `dotnet new keel-slice`.
 - CI job that installs the templates, builds and calls a generated API, and publishes its AOT variant.
 
-## [0.2.0-preview.1] - Unreleased
+## [0.2.0-preview.1] - 2026-10-18
 
 ### Added
 - **Native AOT.** A source generator writes `app.MapKeelEndpoints(prefix)`: one explicit, typed

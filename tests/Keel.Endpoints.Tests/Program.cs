@@ -12,4 +12,5 @@ OpenApiDocumentTests.Register();
 AnalyzerTests.Register();
 GeneratorTests.Register();
 CodeFixTests.Register();
+ManifestTests.Register();
 return await Harness.RunAsync();

@@ -34,6 +34,7 @@ bash eng/template-smoke.sh linux-x64   # the dotnet new templates, JIT and --aot
 - Port the test suite to xUnit v3 (the test bodies map one to one).
 - A code fix for KEEL001 (rename one of the two routes) and KEEL005 (make the class internal).
 - More `keel-slice` options, for example `--stream` for a `StreamEndpoint`.
+- A `dotnet` tool that compares the `api.manifest.json` of two git refs (for release notes).
 
 ## Releases
 
