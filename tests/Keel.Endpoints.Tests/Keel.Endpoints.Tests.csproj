@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    A dependency-free test runner (dotnet run), so the suite runs anywhere the SDK does.
+    Moving to xUnit v3 is tracked on the roadmap; the test bodies port one to one.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <NoWarn>$(NoWarn);ASP0029</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Keel.Endpoints\Keel.Endpoints.csproj" />
+    <ProjectReference Include="..\..\src\Keel.Endpoints.Testing\Keel.Endpoints.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Keel.Endpoints.Analyzers\Keel.Endpoints.Analyzers.csproj" />
+    <ProjectReference Include="..\..\samples\Keel.Sample\Keel.Sample.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(KeelOfflineRoslyn)' != 'true'">
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(KeelOfflineRoslyn)' == 'true'">
+    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(NetCoreRoot)sdk/$(NETCoreSdkVersion)/Roslyn/bincore/Microsoft.CodeAnalysis.dll" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(NetCoreRoot)sdk/$(NETCoreSdkVersion)/Roslyn/bincore/Microsoft.CodeAnalysis.CSharp.dll" />
+  </ItemGroup>
+
+</Project>

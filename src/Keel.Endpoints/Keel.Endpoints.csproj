@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>Keel.Endpoints</PackageId>
+    <Description>One class per endpoint for ASP.NET Core Minimal APIs. Binding, validation and OpenAPI stay native; authorization is fail-closed; analyzers catch route mistakes at build time.</Description>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <KeelAnalyzerTfm>netstandard2.0</KeelAnalyzerTfm>
+    <KeelAnalyzerTfm Condition="'$(KeelOfflineRoslyn)' == 'true'">net10.0</KeelAnalyzerTfm>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Keel.Endpoints.Tests" />
+  </ItemGroup>
+
+  <!-- Ship the analyzers inside this package, so one reference brings them along. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Keel.Endpoints.Analyzers\Keel.Endpoints.Analyzers.csproj"
+                      ReferenceOutputAssembly="false"
+                      PrivateAssets="all" />
+    <None Include="..\Keel.Endpoints.Analyzers\bin\$(Configuration)\$(KeelAnalyzerTfm)\Keel.Endpoints.Analyzers.dll"
+          Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+</Project>

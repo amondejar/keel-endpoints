@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- netstandard2.0 so Visual Studio can load the analyzers; offline builds use net10.0 (see below). -->
+    <TargetFramework Condition="'$(KeelOfflineRoslyn)' != 'true'">netstandard2.0</TargetFramework>
+    <TargetFramework Condition="'$(KeelOfflineRoslyn)' == 'true'">net10.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <!-- Analyzer release tracking is not set up yet; see the roadmap. -->
+    <NoWarn>$(NoWarn);RS2008</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    Normal builds reference the Roslyn packages. Offline builds (no access to nuget.org) can set
+    KeelOfflineRoslyn=true to compile against the Roslyn assemblies bundled with the .NET SDK.
+  -->
+  <ItemGroup Condition="'$(KeelOfflineRoslyn)' != 'true'">
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="4.14.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(KeelOfflineRoslyn)' == 'true'">
+    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(NetCoreRoot)sdk/$(NETCoreSdkVersion)/Roslyn/bincore/Microsoft.CodeAnalysis.dll" Private="false" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(NetCoreRoot)sdk/$(NETCoreSdkVersion)/Roslyn/bincore/Microsoft.CodeAnalysis.CSharp.dll" Private="false" />
+  </ItemGroup>
+
+</Project>

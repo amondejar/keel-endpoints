@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Contracts are discovered for .NET 10 validation through [ValidatableType]. -->
+    <NoWarn>$(NoWarn);ASP0029</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Keel.Endpoints\Keel.Endpoints.csproj" />
+    <!-- In a project that uses the NuGet package the analyzers come with it; here they are referenced directly. -->
+    <ProjectReference Include="..\..\src\Keel.Endpoints.Analyzers\Keel.Endpoints.Analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>
