@@ -3,7 +3,7 @@
 **One class per endpoint for ASP.NET Core Minimal APIs.** Binding, validation and OpenAPI stay
 native; authorization is fail-closed; analyzers catch route mistakes at build time.
 
-> **Status: 0.1 preview.** The API may change before 1.0. See the [roadmap](#roadmap).
+> **Status: 0.3 preview.** The API may change before 1.0. See the [roadmap](#roadmap).
 
 ```csharp
 namespace Billing.Invoices.Get;
@@ -30,6 +30,14 @@ app.MapKeelEndpoints("/api").RequireAuthorization();   // generated at compile t
 
 ```bash
 dotnet add package Keel.Endpoints --prerelease
+```
+
+Or start from a template:
+
+```bash
+dotnet new install Keel.Endpoints.Templates
+dotnet new keel-api -n Shop            # add --aot for Native AOT
+cd Shop && dotnet new keel-slice -n Rename --feature Todos --method put
 ```
 
 ## Why
@@ -119,6 +127,26 @@ public override void Configure(EndpointOptions options)
 `Configure` runs once at map time on an instance created without its constructor, so it must not read
 injected state.
 
+## Endpoint groups
+
+Configuration shared by a feature folder goes in an `EndpointGroup`. A group applies to every endpoint in
+its namespace and the namespaces below it:
+
+```csharp
+namespace Billing.Invoices;
+
+public sealed class InvoicesGroup : EndpointGroup
+{
+    public override void Configure(EndpointOptions options) =>
+        options.RequireAuthorization("billing").Tags("Invoices");
+}
+```
+
+Groups run outermost namespace first, then the endpoint's own `Configure`, so the endpoint has the last
+word. A group's authorization decision counts for fail-closed. Binding and stream format belong to each
+endpoint and are rejected in a group. A group needs a public parameterless constructor (KEEL006). Groups
+work the same with the generated registration, under Native AOT and with the reflective one.
+
 ## Streaming
 
 A `StreamEndpoint` writes a JSON array by default. Mark it `[ServerSentEvents]` for `text/event-stream`:
@@ -158,6 +186,26 @@ Shipped inside the package. See [docs/diagnostics.md](docs/diagnostics.md).
 | KEEL003 | A route parameter on a contract read from the body |
 | KEEL004 | A contract with validation rules but no `[ValidatableType]` |
 | KEEL005 | An endpoint class the generated registration cannot reach (private or nested in a private type) |
+| KEEL006 | An endpoint group the generated registration cannot create (no public parameterless constructor, or not accessible) |
+
+KEEL002, KEEL003 and KEEL004 come with code fixes (the light bulb in Visual Studio, Rider and VS Code):
+add the missing contract member, bind the contract from parameters with
+`[BindRequest(RequestBinding.Parameters)]`, or add `[ValidatableType]`.
+
+## Templates
+
+`Keel.Endpoints.Templates` installs two `dotnet new` templates:
+
+| Template | Creates |
+| --- | --- |
+| `keel-api` | An API with a sample feature, validation, ProblemDetails, OpenAPI and Scalar (`/scalar` in Development). `--aot` adds Native AOT: slim host and a `JsonSerializerContext`. |
+| `keel-slice` | One operation as `Features/<Feature>/<Name>/Endpoint.cs` with its contract. Options: `--feature` (required), `--method get\|post\|put\|patch\|delete`, `--route`, `--folder`. |
+
+A new slice starts fail-closed: the app will not start until you decide who may call it (on the class, in
+an `EndpointGroup` for the feature, or on the route group).
+
+Under `--aot`, OpenAPI and Scalar run only in Development; if a version of either reports trimming
+warnings on publish, they do not affect the endpoints.
 
 ## Testing
 
@@ -184,7 +232,7 @@ See [its README](src/Keel.Endpoints.FluentValidation/README.md).
 ## Roadmap
 
 - **0.2** Native AOT: generated registration (done, `0.2.0-preview`).
-- **0.3** Group configuration per folder, `dotnet new` templates, code fixes.
+- **0.3** Group configuration per folder, `dotnet new` templates, code fixes (done, `0.3.0-preview`).
 - **0.4** A route and contract manifest with breaking-change checks in CI.
 - **1.0** Public API frozen for two previews, full docs, benchmark within 5% of a hand-written Minimal API.
 

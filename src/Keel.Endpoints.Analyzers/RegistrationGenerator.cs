@@ -32,6 +32,13 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
         "Keel.Endpoints", DiagnosticSeverity.Warning, isEnabledByDefault: true,
         helpLinkUri: "https://github.com/OWNER/keel-endpoints/blob/main/docs/diagnostics.md#keel005");
 
+    public static readonly DiagnosticDescriptor GroupNotUsable = new(
+        "KEEL006",
+        "Endpoint group cannot be used by the generated code",
+        "Endpoint group '{0}' {1}, so the generated MapKeelEndpoints() cannot create it; give it a public parameterless constructor and make it public or internal",
+        "Keel.Endpoints", DiagnosticSeverity.Warning, isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/OWNER/keel-endpoints/blob/main/docs/diagnostics.md#keel006");
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var perAttribute = RouteAttributes.Select(name =>
@@ -41,17 +48,26 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
             context.CompilationProvider.Select(static (_, _) => ImmutableArray<EndpointModel>.Empty),
             (acc, next) => acc.Combine(next).Select(static (pair, _) => pair.Left.AddRange(pair.Right.Where(m => m is not null)!)));
 
+        var groups = context.SyntaxProvider.CreateSyntaxProvider(
+                static (node, _) => node is Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax { BaseList: not null },
+                static (ctx, ct) => DescribeGroup(ctx, ct))
+            .Where(static g => g is not null)
+            .Collect();
+
         var alreadyInSource = context.CompilationProvider.Select(static (compilation, _) =>
             compilation.GetTypeByMetadataName(GeneratedTypeName) is { } type && type.Locations.Any(l => l.IsInSource));
 
-        context.RegisterSourceOutput(all.Combine(alreadyInSource), static (spc, input) =>
+        context.RegisterSourceOutput(all.Combine(groups).Combine(alreadyInSource), static (spc, input) =>
         {
-            var (endpoints, inSource) = input;
+            var ((endpoints, groupModels), inSource) = input;
             foreach (var endpoint in endpoints.Where(e => e.Problem is not null))
                 spc.ReportDiagnostic(Diagnostic.Create(NotAccessible, endpoint.Location?.ToLocation() ?? Location.None, endpoint.DisplayName, endpoint.Problem));
+            foreach (var group in groupModels.Where(g => g!.Problem is not null))
+                spc.ReportDiagnostic(Diagnostic.Create(GroupNotUsable, group!.Location?.ToLocation() ?? Location.None, group.DisplayName, group.Problem));
 
             if (inSource) return; // the build already compiles the written-out file (Native AOT)
-            spc.AddSource(HintName, SourceText.From(Emit(endpoints.Where(e => e.Problem is null)), Encoding.UTF8));
+            var usable = groupModels.Where(g => g!.Problem is null).Select(g => g!).ToList();
+            spc.AddSource(HintName, SourceText.From(Emit(endpoints.Where(e => e.Problem is null), usable), Encoding.UTF8));
         });
     }
 
@@ -68,7 +84,8 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
         var location = LocationInfo.From(type.Locations.FirstOrDefault());
 
         var problem = AccessibilityProblem(type);
-        if (problem is not null) return new EndpointModel(display, "", method, template, Shape.Response, null, null, false, false, problem, location);
+        var endpointNamespace = type.ContainingNamespace is { IsGlobalNamespace: false } ns ? ns.ToDisplayString() : "";
+        if (problem is not null) return new EndpointModel(display, "", endpointNamespace, method, template, Shape.Response, null, null, false, false, problem, location);
 
         var (shape, args) = ShapeOf(type);
         if (shape is null) return null;
@@ -85,9 +102,30 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
         if (args.Length > 1) response = args[1].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var sse = type.GetAttributes().Any(a => a.AttributeClass?.ToDisplayString() == "Keel.Endpoints.ServerSentEventsAttribute");
 
-        return new EndpointModel(display, type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), method, template,
+        return new EndpointModel(display, type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), endpointNamespace, method, template,
             shape.Value, request, response, body, sse, null, location);
     }
+
+    private static GroupModel? DescribeGroup(GeneratorSyntaxContext ctx, CancellationToken ct)
+    {
+        if (ctx.SemanticModel.GetDeclaredSymbol(ctx.Node, ct) is not INamedTypeSymbol type || type.IsAbstract || type.IsGenericType) return null;
+
+        var isGroup = false;
+        for (var b = type.BaseType; b is not null && !isGroup; b = b.BaseType)
+            isGroup = b.ToDisplayString() == "Keel.Endpoints.EndpointGroup";
+        if (!isGroup) return null;
+
+        var problem = AccessibilityProblem(type) is { } access ? "is " + access
+            : type.InstanceConstructors.Any(c => c.Parameters.Length == 0 && c.DeclaredAccessibility == Accessibility.Public) ? null
+            : "has no public parameterless constructor";
+
+        return new GroupModel(type.ToDisplayString(), type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
+            type.ContainingNamespace is { IsGlobalNamespace: false } ns ? ns.ToDisplayString() : "",
+            problem, LocationInfo.From(type.Locations.FirstOrDefault()));
+    }
+
+    private static bool Covers(string groupNamespace, string endpointNamespace) =>
+        groupNamespace.Length == 0 || endpointNamespace == groupNamespace || endpointNamespace.StartsWith(groupNamespace + ".", StringComparison.Ordinal);
 
     private static string? AccessibilityProblem(INamedTypeSymbol type)
     {
@@ -132,7 +170,7 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
         return method is "POST" or "PUT" or "PATCH";
     }
 
-    private static string Emit(IEnumerable<EndpointModel> endpoints)
+    private static string Emit(IEnumerable<EndpointModel> endpoints, IReadOnlyList<GroupModel> groups)
     {
         const string Http = "global::Microsoft.AspNetCore.Http";
         const string Gen = "global::Keel.Endpoints.Infrastructure.GeneratedEndpoints";
@@ -173,13 +211,20 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
 
             var requestType = e.Request is null ? "null" : $"typeof({e.Request})";
             var binding = e.Shape == Shape.WithoutRequest ? "null" : e.Body ? "global::Keel.Endpoints.RequestBinding.Body" : "global::Keel.Endpoints.RequestBinding.Parameters";
+            var covering = groups.Where(g => Covers(g.Namespace, e.Namespace))
+                .OrderBy(g => g.Namespace.Length).ThenBy(g => g.TypeName, StringComparer.Ordinal)
+                .Select(g => $"new {g.TypeName}()").ToList();
+            var groupArray = covering.Count == 0
+                ? "global::System.Array.Empty<global::Keel.Endpoints.EndpointGroup>()"
+                : $"new global::Keel.Endpoints.EndpointGroup[] {{ {string.Join(", ", covering)} }}";
 
             sb.AppendLine();
             sb.AppendLine($"            // {e.DisplayName}");
             sb.AppendLine($"            {Gen}.Apply<{e.TypeName}>(");
             sb.AppendLine($"                group.MapMethods({Literal(e.Template)}, new[] {{ {Literal(e.Method)} }},");
             sb.AppendLine($"                    {lambda}),");
-            sb.AppendLine($"                group, {requestType}, {binding}, {(e.ServerSentEvents ? "true" : "false")});");
+            sb.AppendLine($"                group, {requestType}, {binding}, {(e.ServerSentEvents ? "true" : "false")},");
+            sb.AppendLine($"                {groupArray});");
         }
 
         sb.AppendLine();
@@ -197,8 +242,10 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
 
     /// <summary>Plain data only, so the incremental pipeline can cache it.</summary>
     private sealed record EndpointModel(
-        string DisplayName, string TypeName, string Method, string Template, Shape Shape,
+        string DisplayName, string TypeName, string Namespace, string Method, string Template, Shape Shape,
         string? Request, string? Response, bool Body, bool ServerSentEvents, string? Problem, LocationInfo? Location);
+
+    private sealed record GroupModel(string DisplayName, string TypeName, string Namespace, string? Problem, LocationInfo? Location);
 
     private sealed record LocationInfo(string Path, TextSpan Span, LinePositionSpan Lines)
     {

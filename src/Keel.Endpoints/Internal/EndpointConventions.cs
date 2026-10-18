@@ -19,7 +19,8 @@ internal static class EndpointConventions
         Type endpointType,
         EndpointRouteAttribute route,
         EndpointOptions options,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? requestType)
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? requestType,
+        IReadOnlyList<EndpointGroup> groups)
     {
         builder
             .WithName(KeelEndpointsExtensions.OperationName(endpointType))
@@ -30,6 +31,8 @@ internal static class EndpointConventions
                 .Where(a => a is not EndpointRouteAttribute)
                 .ToArray());
 
+        // Folder-wide configuration first (outermost namespace first), then the endpoint's own.
+        EndpointGroups.Apply(builder, endpointType, groups);
         foreach (var convention in options.Conventions) convention(builder);
 
         var keelOptions = app.ServiceProvider.GetRequiredService<IOptions<KeelOptions>>().Value;

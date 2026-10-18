@@ -22,8 +22,8 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(KeelOfflineRoslyn)' == 'true'">
-    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(NetCoreRoot)sdk/$(NETCoreSdkVersion)/Roslyn/bincore/Microsoft.CodeAnalysis.dll" Private="false" />
-    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(NetCoreRoot)sdk/$(NETCoreSdkVersion)/Roslyn/bincore/Microsoft.CodeAnalysis.CSharp.dll" Private="false" />
+    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(KeelRoslynDir)Microsoft.CodeAnalysis.dll" Private="false" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(KeelRoslynDir)Microsoft.CodeAnalysis.CSharp.dll" Private="false" />
   </ItemGroup>
 
 </Project>

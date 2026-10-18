@@ -65,7 +65,8 @@ public static class KeelEndpointsExtensions
     {
         var descriptor = EndpointDescriptor.Create(endpointType);
         var builder = app.MapMethods(descriptor.Route.Template, [descriptor.Route.Method], descriptor.Handler);
-        return EndpointConventions.Apply(builder, app, endpointType, descriptor.Route, descriptor.Options, descriptor.RequestType);
+        return EndpointConventions.Apply(builder, app, endpointType, descriptor.Route, descriptor.Options, descriptor.RequestType,
+            EndpointGroups.For(endpointType));
     }
 
     /// <summary>

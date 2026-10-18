@@ -29,6 +29,7 @@ body=$(curl -s -w '\n%{http_code}' -H 'Content-Type: application/json' -d '{"tit
                                                                       check "body binding"     200 "${body##*$'\n'}" '"title":"ship"' "$body"
 body=$(curl -s -w '\n%{http_code}' -H 'Content-Type: application/json' -d '{"title":""}' "$base/todos")
                                                                       check "validation 400"   400 "${body##*$'\n'}" '"Title"' "$body"
+body=$(curl -s -i "$base/todos/1");                                   check "endpoint group"   "x-feature: todos" "$(grep -io 'x-feature: todos' <<< "$body" | tr 'A-Z' 'a-z' | head -1)"
 body=$(curl -s -w '\n%{http_code}' "$base/todos/events?count=2");     check "server-sent events" 200 "${body##*$'\n'}" 'event: todo' "$body"
 
 ls -la "$out/Keel.AotSample" | awk '{printf "  native binary: %.1f MB\n", $5/1048576}'

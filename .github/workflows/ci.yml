@@ -31,3 +31,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: bash eng/aot-smoke.sh linux-x64
+
+  templates:
+    # Packs and installs the dotnet new templates, creates an API with keel-api and slices with
+    # keel-slice, builds and calls it, then publishes the keel-api --aot variant natively and calls it.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: bash eng/template-smoke.sh linux-x64

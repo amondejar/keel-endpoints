@@ -28,14 +28,16 @@ public static class GeneratedEndpoints
 
     /// <summary>
     /// Applies Keel's conventions to a generated registration and checks that runtime configuration
-    /// agrees with what the generator decided at compile time.
+    /// agrees with what the generator decided at compile time. <paramref name="groups"/> are the
+    /// <see cref="EndpointGroup"/> classes covering the endpoint, outermost first, found at compile time.
     /// </summary>
     public static RouteHandlerBuilder Apply<[DynamicallyAccessedMembers(AllCtors)] TEndpoint>(
         RouteHandlerBuilder builder,
         IEndpointRouteBuilder app,
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? requestType,
         RequestBinding? generatedBinding,
-        bool generatedServerSentEvents)
+        bool generatedServerSentEvents,
+        EndpointGroup[] groups)
         where TEndpoint : EndpointBase
     {
         var endpointType = typeof(TEndpoint);
@@ -58,7 +60,7 @@ public static class GeneratedEndpoints
         }
 
         EventTypes<TEndpoint>.Value = eventType;
-        return EndpointConventions.Apply(builder, app, endpointType, route, options, requestType);
+        return EndpointConventions.Apply(builder, app, endpointType, route, options, requestType, groups);
     }
 
     private static bool IsStream(Type endpointType)

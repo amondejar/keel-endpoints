@@ -22,15 +22,22 @@ dotnet run --project tests/Keel.Endpoints.Tests
 
 Offline (no nuget.org): append `-p:KeelOfflineRoslyn=true` to both commands.
 
+Smoke tests that publish and call real apps (bash; Git Bash works on Windows):
+
+```bash
+bash eng/aot-smoke.sh linux-x64        # the Native AOT sample
+bash eng/template-smoke.sh linux-x64   # the dotnet new templates, JIT and --aot
+```
+
 ## Good first issues
 
 - Port the test suite to xUnit v3 (the test bodies map one to one).
-- Code fixes for KEEL002 to KEEL004.
-- A `dotnet new` item template for a vertical slice.
+- A code fix for KEEL001 (rename one of the two routes) and KEEL005 (make the class internal).
+- More `keel-slice` options, for example `--stream` for a `StreamEndpoint`.
 
 ## Releases
 
-Maintainers tag `vX.Y.Z[-preview.N]`; the release workflow packs and pushes to nuget.org.
+Maintainers tag `vX.Y.Z[-preview.N]`; the release workflow packs and pushes to nuget.org through NuGet Trusted Publishing (no stored API key).
 
 ## Code of conduct
 

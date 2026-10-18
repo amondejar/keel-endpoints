@@ -1,0 +1,9 @@
+<Project>
+  <!--
+    Offline builds (no nuget.org) compile the analyzers, code fixes and tests against the Roslyn
+    assemblies that ship with the SDK (dotnet-format), instead of the Microsoft.CodeAnalysis packages.
+  -->
+  <PropertyGroup Condition="'$(KeelOfflineRoslyn)' == 'true'">
+    <KeelRoslynDir>$(NetCoreRoot)sdk/$(NETCoreSdkVersion)/DotnetTools/dotnet-format/</KeelRoslynDir>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Code fixes for the Keel.Endpoints analyzers. A separate assembly because code fixes depend on
+    Roslyn Workspaces, which analyzers must not reference (RS1038). Packed next to the analyzers.
+  -->
+  <PropertyGroup>
+    <TargetFramework Condition="'$(KeelOfflineRoslyn)' != 'true'">netstandard2.0</TargetFramework>
+    <TargetFramework Condition="'$(KeelOfflineRoslyn)' == 'true'">net10.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(KeelOfflineRoslyn)' != 'true'">
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(KeelOfflineRoslyn)' == 'true'">
+    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(KeelRoslynDir)Microsoft.CodeAnalysis.dll" Private="false" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(KeelRoslynDir)Microsoft.CodeAnalysis.CSharp.dll" Private="false" />
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces" HintPath="$(KeelRoslynDir)Microsoft.CodeAnalysis.Workspaces.dll" Private="false" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" HintPath="$(KeelRoslynDir)Microsoft.CodeAnalysis.CSharp.Workspaces.dll" Private="false" />
+    <Reference Include="System.Composition.AttributedModel" HintPath="$(KeelRoslynDir)System.Composition.AttributedModel.dll" Private="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Keel.Endpoints.Analyzers\Keel.Endpoints.Analyzers.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

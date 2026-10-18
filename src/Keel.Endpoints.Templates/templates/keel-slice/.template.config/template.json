@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Keel.Endpoints contributors",
+  "classifications": ["Web", "Keel.Endpoints"],
+  "identity": "Keel.Endpoints.Templates.Slice",
+  "name": "Keel.Endpoints vertical slice",
+  "description": "One operation as a folder: its request contract and endpoint class, bound the right way for its HTTP method. Run it in the project folder: dotnet new keel-slice -n Rename --feature Todos --method put",
+  "shortName": "keel-slice",
+  "sourceName": "OperationName",
+  "tags": { "language": "C#", "type": "item" },
+  "symbols": {
+    "feature": {
+      "type": "parameter",
+      "datatype": "text",
+      "isRequired": true,
+      "description": "The feature the operation belongs to (a folder and namespace), for example Todos.",
+      "replaces": "FeatureName",
+      "fileRename": "FeatureName"
+    },
+    "method": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "get",
+      "description": "The HTTP method. It decides the binding: get/delete read route and query, post reads the body, put/patch read the route plus a [FromBody] member.",
+      "choices": [
+        { "choice": "get" }, { "choice": "post" }, { "choice": "put" }, { "choice": "patch" }, { "choice": "delete" }
+      ]
+    },
+    "route": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "",
+      "description": "The route template. Default: <feature> for post, <feature>/{id} otherwise.",
+      "replaces": "ROUTE_VALUE"
+    },
+    "folder": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "Features",
+      "description": "The folder (and namespace segment) that holds features.",
+      "replaces": "FeaturesFolder",
+      "fileRename": "FeaturesFolder"
+    },
+    "rootNamespace": {
+      "type": "bind",
+      "binding": "msbuild:RootNamespace",
+      "defaultValue": "MyApi",
+      "replaces": "RootNs"
+    },
+    "featureLower": {
+      "type": "generated",
+      "generator": "casing",
+      "parameters": { "source": "feature", "toLower": true },
+      "replaces": "featurelower"
+    },
+    "verb": {
+      "type": "generated",
+      "generator": "switch",
+      "replaces": "VerbAttr",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          { "condition": "(method == \"post\")", "value": "Post" },
+          { "condition": "(method == \"put\")", "value": "Put" },
+          { "condition": "(method == \"patch\")", "value": "Patch" },
+          { "condition": "(method == \"delete\")", "value": "Delete" },
+          { "condition": "(true)", "value": "Get" }
+        ]
+      }
+    },
+    "customRoute": { "type": "computed", "value": "(route != \"\")" },
+    "isPost": { "type": "computed", "value": "(method == \"post\")" },
+    "isUpdate": { "type": "computed", "value": "(method == \"put\" || method == \"patch\")" },
+    "isDelete": { "type": "computed", "value": "(method == \"delete\")" }
+  }
+}

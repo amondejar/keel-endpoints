@@ -3,6 +3,18 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.3.0-preview.1] - Unreleased
+
+### Added
+- **Endpoint groups.** An `EndpointGroup` subclass configures every endpoint in its namespace and below
+  (authorization, tags, conventions, filters), outermost first, before the endpoint's own `Configure`.
+  Works with the generated registration, Native AOT and the reflective registration.
+- KEEL006: endpoint groups the generated registration cannot create.
+- **Code fixes** for KEEL002 (add the contract member), KEEL003 (`[BindRequest(RequestBinding.Parameters)]`)
+  and KEEL004 (`[ValidatableType]`), shipped inside the package.
+- **`Keel.Endpoints.Templates`**: `dotnet new keel-api` (optionally `--aot`) and `dotnet new keel-slice`.
+- CI job that installs the templates, builds and calls a generated API, and publishes its AOT variant.
+
 ## [0.2.0-preview.1] - Unreleased
 
 ### Added

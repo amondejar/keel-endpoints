@@ -155,7 +155,7 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
         if (ReadsFromBody(contract, method))
         {
             context.ReportDiagnostic(Diagnostic.Create(RouteParameterWithBodyContract, location,
-                endpoint.Name, contract.Name, parameters[0]));
+                FixProperties(contract, parameters[0]), endpoint.Name, contract.Name, parameters[0]));
             return;
         }
 
@@ -167,9 +167,18 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
         foreach (var parameter in parameters.Where(p => !members.Contains(p)))
         {
             context.ReportDiagnostic(Diagnostic.Create(RouteParameterNotInContract, location,
-                parameter, endpoint.Name, contract.Name));
+                FixProperties(contract, parameter), parameter, endpoint.Name, contract.Name));
         }
     }
+
+    /// <summary>What the code fixes need: which contract to change and which route parameter it is about.</summary>
+    private static ImmutableDictionary<string, string?> FixProperties(INamedTypeSymbol contract, string parameter) =>
+        ImmutableDictionary<string, string?>.Empty
+            .Add(ContractProperty, DocumentationCommentId.CreateDeclarationId(contract))
+            .Add(ParameterProperty, parameter);
+
+    public const string ContractProperty = "KeelContract";
+    public const string ParameterProperty = "KeelParameter";
 
     private static bool ReadsFromBody(INamedTypeSymbol contract, string method)
     {

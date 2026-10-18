@@ -86,6 +86,36 @@ internal static class GeneratorTests
             Assert.Equal(0, trees);
         });
 
+        Test("Generator: endpoint groups are created in code, outermost namespace first", () =>
+        {
+            var (source, diagnostics, errors) = Run("""
+                namespace Shop { public sealed class ShopGroup : EndpointGroup { public override void Configure(EndpointOptions o) => o.Tags("Shop"); } }
+                namespace Shop.Admin { public sealed class AdminGroup : EndpointGroup { public override void Configure(EndpointOptions o) => o.RequireAuthorization("admin"); }
+                  [Get("admin/ping")] public sealed class PingEndpoint : EndpointWithoutRequest<string>
+                  { public override Task<string> HandleAsync(CancellationToken ct) => Task.FromResult(""); } }
+                namespace Other { [Get("other")] public sealed class OtherEndpoint : EndpointWithoutRequest<string>
+                  { public override Task<string> HandleAsync(CancellationToken ct) => Task.FromResult(""); } }
+                """);
+
+            Assert.Equal("", string.Join(",", diagnostics) + string.Join(",", errors));
+            Assert.True(source.Contains("new global::Keel.Endpoints.EndpointGroup[] { new global::Shop.ShopGroup(), new global::Shop.Admin.AdminGroup() }"));
+            Assert.True(source.Contains("global::System.Array.Empty<global::Keel.Endpoints.EndpointGroup>()")); // Other: no group
+        });
+
+        Test("Generator: KEEL006 for a group without a public parameterless constructor", () =>
+        {
+            var (source, diagnostics, errors) = Run("""
+                public sealed class NeedsArgs : EndpointGroup
+                { public NeedsArgs(string name) { } public override void Configure(EndpointOptions o) { } }
+                [Get("ping")] public sealed class PingEndpoint : EndpointWithoutRequest<string>
+                { public override Task<string> HandleAsync(CancellationToken ct) => Task.FromResult(""); }
+                """);
+
+            Assert.Equal("", string.Join(",", errors));
+            Assert.Equal("KEEL006", string.Join(",", diagnostics));
+            Assert.True(!source.Contains("NeedsArgs"));
+        });
+
         Test("Generator: the generated code compiles and maps the app with MapKeelEndpoints(prefix)", () =>
         {
             var (_, _, errors) = Run("""

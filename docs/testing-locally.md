@@ -9,7 +9,7 @@ dotnet build
 dotnet run --project tests/Keel.Endpoints.Tests
 ```
 
-Expected: `38 passed, 0 failed` (`37` in an offline build, which skips the generated OpenAPI document test). The build itself proves the analyzers load: warnings are errors here.
+Expected: `51 passed, 0 failed` (`50` in an offline build, which skips the generated OpenAPI document test). The build itself proves the analyzers load: warnings are errors here.
 
 ## 2. Play with the sample API
 
@@ -73,3 +73,24 @@ bash eng/aot-smoke.sh linux-x64        # or win-x64 / osx-arm64; publishes, runs
 
 Native AOT needs the platform toolchain: on Windows, Visual Studio's "Desktop development with C++"
 workload; on Linux, `clang` and `zlib1g-dev`.
+
+## 6. The dotnet new templates
+
+```bash
+bash eng/template-smoke.sh linux-x64   # packs and installs the templates, creates an API and slices, builds, runs and calls it, then the --aot variant
+```
+
+By hand, from the repository root:
+
+```bash
+dotnet pack src/Keel.Endpoints -c Release -o artifacts
+dotnet pack src/Keel.Endpoints.Templates -c Release -o artifacts
+dotnet new install artifacts/Keel.Endpoints.Templates.<version>.nupkg
+cd ..   # outside the repository
+dotnet new keel-api -n Shop && cd Shop
+dotnet new keel-slice -n Rename --feature Todos --method put
+dotnet run                                 # then open http://localhost:5000/scalar
+```
+
+With the `keel-local` source from section 4, the generated project restores the local Keel.Endpoints.
+Uninstall with `dotnet new uninstall Keel.Endpoints.Templates`.

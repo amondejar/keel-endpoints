@@ -43,6 +43,20 @@ public sealed class TodoStore
     }
 }
 
+namespace Todos
+{
+    /// <summary>Applies to every endpoint under Todos: created by the generated code, no reflection.</summary>
+    public sealed class TodosGroup : EndpointGroup
+    {
+        public override void Configure(EndpointOptions options) =>
+            options.Convention(b => b.AddEndpointFilter(async (context, next) =>
+            {
+                context.HttpContext.Response.Headers["X-Feature"] = "todos";
+                return await next(context);
+            }));
+    }
+}
+
 namespace Todos.Get
 {
     [Get("todos/{id}")]

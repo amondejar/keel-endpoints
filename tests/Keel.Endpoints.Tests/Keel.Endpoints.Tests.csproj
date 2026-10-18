@@ -15,11 +15,12 @@
     <ProjectReference Include="..\..\src\Keel.Endpoints.Testing\Keel.Endpoints.Testing.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.FluentValidation\Keel.Endpoints.FluentValidation.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.Analyzers\Keel.Endpoints.Analyzers.csproj" />
+    <ProjectReference Include="..\..\src\Keel.Endpoints.CodeFixes\Keel.Endpoints.CodeFixes.csproj" />
     <ProjectReference Include="..\..\samples\Keel.Sample\Keel.Sample.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(KeelOfflineRoslyn)' != 'true'">
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
     <!-- Generates the real OpenAPI document in OpenApiDocumentTests (not available offline). -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <!-- Pins the transitive Microsoft.OpenApi past GHSA-v5pm-xwqc-g5wc (fixed in 2.7.5). -->
@@ -29,8 +30,15 @@
     <DefineConstants>$(DefineConstants);KEEL_OPENAPI</DefineConstants>
   </PropertyGroup>
   <ItemGroup Condition="'$(KeelOfflineRoslyn)' == 'true'">
-    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(NetCoreRoot)sdk/$(NETCoreSdkVersion)/Roslyn/bincore/Microsoft.CodeAnalysis.dll" />
-    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(NetCoreRoot)sdk/$(NETCoreSdkVersion)/Roslyn/bincore/Microsoft.CodeAnalysis.CSharp.dll" />
+    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(KeelRoslynDir)Microsoft.CodeAnalysis.dll" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(KeelRoslynDir)Microsoft.CodeAnalysis.CSharp.dll" />
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces" HintPath="$(KeelRoslynDir)Microsoft.CodeAnalysis.Workspaces.dll" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" HintPath="$(KeelRoslynDir)Microsoft.CodeAnalysis.CSharp.Workspaces.dll" />
+    <Reference Include="System.Composition.AttributedModel" HintPath="$(KeelRoslynDir)System.Composition.AttributedModel.dll" />
+    <Reference Include="System.Composition.Hosting" HintPath="$(KeelRoslynDir)System.Composition.Hosting.dll" />
+    <Reference Include="System.Composition.Runtime" HintPath="$(KeelRoslynDir)System.Composition.Runtime.dll" />
+    <Reference Include="System.Composition.TypedParts" HintPath="$(KeelRoslynDir)System.Composition.TypedParts.dll" />
+    <Reference Include="System.Composition.Convention" HintPath="$(KeelRoslynDir)System.Composition.Convention.dll" />
   </ItemGroup>
 
 </Project>

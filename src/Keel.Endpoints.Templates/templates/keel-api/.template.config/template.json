@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Keel.Endpoints contributors",
+  "classifications": [
+    "Web",
+    "WebAPI",
+    "Keel.Endpoints"
+  ],
+  "identity": "Keel.Endpoints.Templates.Api",
+  "name": "Keel.Endpoints API",
+  "description": "An ASP.NET Core API organized as one class per endpoint, with Keel.Endpoints, .NET 10 validation, OpenAPI and Scalar. Optional Native AOT.",
+  "shortName": "keel-api",
+  "sourceName": "KeelApi",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "symbols": {
+    "aot": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Publish with Native AOT: slim host and a JsonSerializerContext for every wire type."
+    },
+    "skipRestore": {
+      "type": "parameter",
+      "datatype": "bool",
+      "description": "Skip the automatic restore after creating the project.",
+      "defaultValue": "false"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!aot)",
+          "exclude": [
+            "AppJsonContext.cs"
+          ]
+        }
+      ]
+    }
+  ],
+  "postActions": [
+    {
+      "description": "Restore packages.",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true,
+      "condition": "(!skipRestore)"
+    }
+  ],
+  "primaryOutputs": [
+    {
+      "path": "KeelApi.csproj"
+    }
+  ]
+}

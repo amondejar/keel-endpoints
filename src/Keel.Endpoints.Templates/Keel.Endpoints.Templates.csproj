@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    dotnet new templates: keel-api (a new API, optionally Native AOT) and keel-slice (one operation
+    in an existing API). Usage is in the package README section "Templates".
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PackageId>Keel.Endpoints.Templates</PackageId>
+    <PackageType>Template</PackageType>
+    <Description>dotnet new templates for Keel.Endpoints: keel-api creates an API (optionally Native AOT), keel-slice adds one operation as a folder with its contract and endpoint.</Description>
+    <PackageTags>$(PackageTags);templates;dotnet-new</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- A content-only package: no lib/ folder is expected. -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="templates\**\*" Exclude="templates\**\bin\**;templates\**\obj\**;templates\keel-api\KeelApi.csproj" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <!--
+    The keel-api template references Keel.Endpoints at the version being packed: the project file is
+    copied with KEEL_PACKAGE_VERSION replaced, so templates and library always ship in step.
+  -->
+  <Target Name="KeelStampTemplateVersion" BeforeTargets="_GetPackageFiles">
+    <PropertyGroup>
+      <_KeelStampedProject>$(IntermediateOutputPath)templates/keel-api/KeelApi.csproj</_KeelStampedProject>
+      <_KeelProjectText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/templates/keel-api/KeelApi.csproj').Replace('KEEL_PACKAGE_VERSION', '$(PackageVersion)'))</_KeelProjectText>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(_KeelStampedProject)" Lines="$([MSBuild]::Escape($(_KeelProjectText)))" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Content Include="$(_KeelStampedProject)" Pack="true" PackagePath="content/templates/keel-api/KeelApi.csproj" />
+    </ItemGroup>
+  </Target>
+
+</Project>
