@@ -17,26 +17,7 @@ internal static class FluentValidationFilter
         var registry = context.ApplicationServices.GetService<IServiceProviderIsService>();
         if (registry is null) return next;
 
-        var targets = new List<Target>();
-        var parameters = context.MethodInfo.GetParameters();
-        for (var index = 0; index < parameters.Length; index++)
-        {
-            var type = parameters[index].ParameterType;
-            if (!IsCandidate(type)) continue;
-
-            if (registry.IsService(ValidatorType(type)))
-                targets.Add(new Target(index, null, ValidatorType(type), Prefix: null));
-
-            // A contract bound as parameters may carry its JSON body in a [FromBody] member.
-            foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                if (!IsCandidate(property.PropertyType)) continue;
-                if (!property.GetCustomAttributes(inherit: true).OfType<IFromBodyMetadata>().Any()) continue;
-                if (registry.IsService(ValidatorType(property.PropertyType)))
-                    targets.Add(new Target(index, property, ValidatorType(property.PropertyType), Prefix: property.Name + "."));
-            }
-        }
-
+        var targets = FindTargets(context.MethodInfo, registry);
         if (targets.Count == 0) return next;
 
         return async invocation =>
@@ -71,11 +52,37 @@ internal static class FluentValidationFilter
         };
     }
 
+    /// <summary>The arguments (or [FromBody] members of them) that have a registered validator.</summary>
+    internal static List<Target> FindTargets(MethodInfo method, IServiceProviderIsService registry)
+    {
+        var targets = new List<Target>();
+        var parameters = method.GetParameters();
+        for (var index = 0; index < parameters.Length; index++)
+        {
+            var type = parameters[index].ParameterType;
+            if (!IsCandidate(type)) continue;
+
+            if (registry.IsService(ValidatorType(type)))
+                targets.Add(new Target(index, null, ValidatorType(type), Prefix: null));
+
+            // A contract bound as parameters may carry its JSON body in a [FromBody] member.
+            foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (!IsCandidate(property.PropertyType)) continue;
+                if (!property.GetCustomAttributes(inherit: true).OfType<IFromBodyMetadata>().Any()) continue;
+                if (registry.IsService(ValidatorType(property.PropertyType)))
+                    targets.Add(new Target(index, property, ValidatorType(property.PropertyType), Prefix: property.Name + "."));
+            }
+        }
+
+        return targets;
+    }
+
     private static Type ValidatorType(Type type) => typeof(IValidator<>).MakeGenericType(type);
 
     private static bool IsCandidate(Type type) =>
         !type.IsPrimitive && type != typeof(string) && type != typeof(CancellationToken) && type != typeof(HttpContext)
         && !type.IsGenericTypeDefinition && !type.ContainsGenericParameters;
 
-    private sealed record Target(int Index, PropertyInfo? Property, Type ValidatorType, string? Prefix);
+    internal sealed record Target(int Index, PropertyInfo? Property, Type ValidatorType, string? Prefix);
 }

@@ -107,6 +107,17 @@ public sealed class Endpoint : StreamEndpoint<WatchInvoices, InvoiceEvent>
 }
 ```
 
+## OpenAPI
+
+Endpoints describe themselves through ASP.NET Core's own metadata, so `AddOpenApi()` / `MapOpenApi()`
+(or Swashbuckle, NSwag, Scalar) document routes, parameters, bodies and every typed result. Keel adds two
+things the shared handler would otherwise get wrong or leave out:
+
+- **Tags from the namespace.** `Billing.Invoices.Get.Endpoint` is tagged `Invoices`. A tag declared with
+  `[Tags]`, `options.Tags(...)` or on the group wins. Turn it off with `KeelOptions.TagFromNamespace = false`.
+- **The validation 400.** Contracts validated by .NET 10 (`[ValidatableType]` with `AddValidation()`) and
+  endpoints validated by `WithFluentValidation()` document their `400` validation problem response.
+
 ## Analyzers
 
 Shipped inside the package. See [docs/diagnostics.md](docs/diagnostics.md).

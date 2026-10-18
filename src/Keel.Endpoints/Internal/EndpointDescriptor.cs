@@ -9,7 +9,8 @@ internal sealed record EndpointDescriptor(
     Type EndpointType,
     EndpointRouteAttribute Route,
     EndpointOptions Options,
-    Delegate Handler)
+    Delegate Handler,
+    Type? RequestType)
 {
     public static EndpointDescriptor Create(Type endpointType)
     {
@@ -40,7 +41,8 @@ internal sealed record EndpointDescriptor(
             .MakeGenericMethod([endpointType, .. args]);
         var delegateType = Expression.GetDelegateType([.. method.GetParameters().Select(p => p.ParameterType), method.ReturnType]);
 
-        return new EndpointDescriptor(endpointType, route, options, method.CreateDelegate(delegateType));
+        var requestType = shape == EndpointShape.WithoutRequest ? null : args[0];
+        return new EndpointDescriptor(endpointType, route, options, method.CreateDelegate(delegateType), requestType);
     }
 
     private static (EndpointShape, Type[]) Shape(Type endpointType)

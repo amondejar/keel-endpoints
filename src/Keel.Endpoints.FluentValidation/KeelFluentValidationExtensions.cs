@@ -45,6 +45,18 @@ public static class KeelFluentValidationExtensions
     public static TBuilder WithFluentValidation<TBuilder>(this TBuilder builder) where TBuilder : IEndpointConventionBuilder
     {
         builder.AddEndpointFilterFactory(FluentValidationFilter.Create);
+
+        // OpenAPI: document the 400 on exactly the endpoints the filter will validate.
+        builder.Add(endpoint =>
+        {
+            var method = endpoint.Metadata.OfType<MethodInfo>().FirstOrDefault();
+            var registry = endpoint.ApplicationServices.GetService<IServiceProviderIsService>();
+            if (method is null || registry is null || FluentValidationFilter.FindTargets(method, registry).Count == 0) return;
+
+            endpoint.Metadata.Add(new ProducesResponseTypeMetadata(
+                StatusCodes.Status400BadRequest, typeof(HttpValidationProblemDetails), ["application/problem+json"]));
+        });
+
         return builder;
     }
 }

@@ -3,7 +3,18 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [0.1.0-preview.2] - Unreleased
+## [0.1.0-preview.3] - Unreleased
+
+### Fixed
+- OpenAPI tagged every endpoint with the internal handler type name ("Handlers"). Endpoints are now
+  tagged from their namespace (`KeelOptions.TagFromNamespace`, on by default); explicit tags win.
+
+### Added
+- The `400` validation problem response is documented for contracts validated by .NET 10 validation
+  and for endpoints validated by `WithFluentValidation()`.
+- Tests over the ApiExplorer descriptions and, in CI, over the generated OpenAPI document.
+
+## [0.1.0-preview.2] - 2026-10-18
 
 ### Added
 - `Keel.Endpoints.FluentValidation`: `AddKeelFluentValidation(assembly)` and `WithFluentValidation()`, an

@@ -2,6 +2,7 @@ using System.Reflection;
 using Keel.Endpoints.Internal;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -67,6 +68,20 @@ public static class KeelEndpointsExtensions
         foreach (var convention in descriptor.Options.Conventions) convention(builder);
 
         var keelOptions = app.ServiceProvider.GetRequiredService<IOptions<KeelOptions>>().Value;
+
+        // OpenAPI: document the 400 that .NET 10 validation can return for this contract.
+        if (OpenApiConventions.UsesNativeValidation(app.ServiceProvider, descriptor.RequestType))
+            builder.ProducesValidationProblem();
+
+        // OpenAPI: every Keel endpoint shares one internal handler type, which OpenAPI would otherwise
+        // use as the tag for all of them. Tag from the namespace unless a tag was declared anywhere.
+        if (keelOptions.TagFromNamespace && OpenApiConventions.DefaultTag(endpointType) is { } tag)
+        {
+            builder.Finally(b =>
+            {
+                if (!b.Metadata.OfType<ITagsMetadata>().Any()) b.Metadata.Add(new TagsAttribute(tag));
+            });
+        }
         if (keelOptions.RequireExplicitAuthorization)
         {
             // Finally conventions run after group and endpoint conventions, so authorization

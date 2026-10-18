@@ -69,4 +69,12 @@ public sealed class KeelOptions
     /// group counts, so <c>MapKeelEndpoints().RequireAuthorization()</c> satisfies it for every endpoint.
     /// </summary>
     public bool RequireExplicitAuthorization { get; set; } = true;
+
+    /// <summary>
+    /// When <see langword="true"/> (the default), an endpoint with no OpenAPI tag gets one from its
+    /// namespace: <c>Billing.Invoices.Get.Endpoint</c> is tagged <c>Invoices</c>, and
+    /// <c>Billing.Invoices.GetInvoiceEndpoint</c> is tagged <c>Invoices</c> too. Tags set with
+    /// <c>[Tags]</c>, <c>options.Tags(...)</c> or on the route group always win.
+    /// </summary>
+    public bool TagFromNamespace { get; set; } = true;
 }
