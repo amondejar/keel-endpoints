@@ -78,6 +78,12 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
         {
             var routes = new ConcurrentBag<(string Key, string Method, string Template, INamedTypeSymbol Type, Location Location)>();
 
+            // With the registration written to disk (Native AOT), the .NET 10 validation generator sees every
+            // contract in the generated MapMethods calls, so [ValidatableType] is not needed (KEEL004 is off).
+            var registrationFile = start.Options.AnalyzerConfigOptionsProvider.GlobalOptions
+                .TryGetValue("build_property.KeelRegistrationFile", out var value)
+                && string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+
             start.RegisterSymbolAction(symbolContext =>
             {
                 var type = (INamedTypeSymbol)symbolContext.Symbol;
@@ -95,7 +101,7 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
                 if (contract is null) return;
 
                 CheckRouteParameters(symbolContext, type, contract, method, template, location);
-                CheckValidatable(symbolContext, contract);
+                if (!registrationFile) CheckValidatable(symbolContext, contract);
             }, SymbolKind.NamedType);
 
             start.RegisterCompilationEndAction(end =>

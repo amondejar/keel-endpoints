@@ -1,0 +1,52 @@
+<Project>
+  <!--
+    Native AOT support for the generated MapKeelEndpoints(prefix).
+
+    Keel's source generator writes one explicit MapMethods call per endpoint class. For Native AOT,
+    ASP.NET Core's Request Delegate Generator must turn those calls into AOT-safe binding code, but a
+    source generator cannot see the output of another source generator. So, when this is on, the
+    build first compiles the project once with generated files written to disk, then adds Keel's file
+    to the real compilation as ordinary source, where the Request Delegate Generator (and the .NET 10
+    validation generator) can see it.
+
+    On by default when PublishAot is true. Set KeelRegistrationFile to true or false to override.
+  -->
+  <ItemGroup>
+    <!-- Lets the analyzers know the registration is ordinary source (KEEL004 does not apply then). -->
+    <CompilerVisibleProperty Include="KeelRegistrationFile" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <KeelRegistrationFile Condition="'$(KeelRegistrationFile)' == '' and '$(PublishAot)' == 'true'">true</KeelRegistrationFile>
+  </PropertyGroup>
+
+  <!-- The stage-1 compile's own settings must not reach project references (they would look for their outputs here). -->
+  <ItemDefinitionGroup Condition="'$(KeelRegistrationStage)' == 'true'">
+    <ProjectReference>
+      <GlobalPropertiesToRemove>%(GlobalPropertiesToRemove);KeelRegistrationStage;IntermediateOutputPath;EmitCompilerGeneratedFiles;CompilerGeneratedFilesOutputPath</GlobalPropertiesToRemove>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+
+  <Target Name="KeelWriteRegistrationFile"
+          BeforeTargets="CoreCompile"
+          Condition="'$(KeelRegistrationFile)' == 'true' and '$(KeelRegistrationStage)' != 'true' and '$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup>
+      <_KeelStageDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'keel'))</_KeelStageDir>
+      <_KeelGeneratedFile>$(_KeelStageDir)generated/Keel.Endpoints.Analyzers/Keel.Endpoints.Analyzers.RegistrationGenerator/KeelEndpoints.g.cs</_KeelGeneratedFile>
+    </PropertyGroup>
+
+    <!-- Stage 1: compile once with the generators' output written to disk. -->
+    <MakeDir Directories="$(_KeelStageDir)generated;$(_KeelStageDir)obj" />
+    <MSBuild Projects="$(MSBuildProjectFullPath)"
+             Targets="Compile"
+             Properties="KeelRegistrationStage=true;BuildProjectReferences=false;IntermediateOutputPath=$(_KeelStageDir)obj/;EmitCompilerGeneratedFiles=true;CompilerGeneratedFilesOutputPath=$(_KeelStageDir)generated" />
+
+    <Error Condition="!Exists('$(_KeelGeneratedFile)')"
+           Text="Keel.Endpoints could not write its endpoint registration for Native AOT (expected $(_KeelGeneratedFile)). Set KeelRegistrationFile=false to build without it." />
+
+    <!-- Stage 2: the registration is now ordinary source for this compilation. -->
+    <ItemGroup>
+      <Compile Include="$(_KeelGeneratedFile)" />
+    </ItemGroup>
+  </Target>
+</Project>

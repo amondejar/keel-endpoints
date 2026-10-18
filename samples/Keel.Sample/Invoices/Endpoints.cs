@@ -71,15 +71,9 @@ namespace Keel.Sample.Invoices.Delete
 
 namespace Keel.Sample.Invoices.Watch
 {
-    [Get("invoices/events")]
+    [Get("invoices/events"), ServerSentEvents("invoice")]
     public sealed class Endpoint : StreamEndpoint<WatchInvoices, InvoiceEvent>
     {
-        public override void Configure(EndpointOptions options)
-        {
-            options.StreamFormat = StreamFormat.ServerSentEvents;
-            options.EventType = "invoice";
-        }
-
         public override async IAsyncEnumerable<InvoiceEvent> HandleAsync(WatchInvoices request, [EnumeratorCancellation] CancellationToken ct)
         {
             for (var i = 1; i <= request.Count; i++)

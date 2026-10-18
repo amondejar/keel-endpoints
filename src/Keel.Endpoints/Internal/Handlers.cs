@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Keel.Endpoints.Internal;
 
@@ -12,20 +12,20 @@ namespace Keel.Endpoints.Internal;
 internal static class Handlers
 {
     // Endpoint<TRequest, TResponse>
-    public static Task<TResponse> ResponseFromParameters<TEndpoint, TRequest, TResponse>(
+    public static Task<TResponse> ResponseFromParameters<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest, TResponse>(
         [AsParameters] TRequest request, HttpContext context, CancellationToken ct)
         where TEndpoint : Endpoint<TRequest, TResponse>
         where TRequest : notnull
         => Activate<TEndpoint>(context).HandleAsync(request, ct);
 
-    public static Task<TResponse> ResponseFromBody<TEndpoint, TRequest, TResponse>(
+    public static Task<TResponse> ResponseFromBody<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest, TResponse>(
         [FromBody] TRequest request, HttpContext context, CancellationToken ct)
         where TEndpoint : Endpoint<TRequest, TResponse>
         where TRequest : notnull
         => Activate<TEndpoint>(context).HandleAsync(request, ct);
 
     // Endpoint<TRequest>
-    public static async Task<NoContent> NoContentFromParameters<TEndpoint, TRequest>(
+    public static async Task<NoContent> NoContentFromParameters<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest>(
         [AsParameters] TRequest request, HttpContext context, CancellationToken ct)
         where TEndpoint : Endpoint<TRequest>
         where TRequest : notnull
@@ -34,7 +34,7 @@ internal static class Handlers
         return TypedResults.NoContent();
     }
 
-    public static async Task<NoContent> NoContentFromBody<TEndpoint, TRequest>(
+    public static async Task<NoContent> NoContentFromBody<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest>(
         [FromBody] TRequest request, HttpContext context, CancellationToken ct)
         where TEndpoint : Endpoint<TRequest>
         where TRequest : notnull
@@ -44,19 +44,19 @@ internal static class Handlers
     }
 
     // EndpointWithoutRequest<TResponse>
-    public static Task<TResponse> WithoutRequest<TEndpoint, TResponse>(HttpContext context, CancellationToken ct)
+    public static Task<TResponse> WithoutRequest<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TResponse>(HttpContext context, CancellationToken ct)
         where TEndpoint : EndpointWithoutRequest<TResponse>
         => Activate<TEndpoint>(context).HandleAsync(ct);
 
     // ResultEndpoint<TRequest, TResult>
-    public static Task<TResult> ResultFromParameters<TEndpoint, TRequest, TResult>(
+    public static Task<TResult> ResultFromParameters<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest, TResult>(
         [AsParameters] TRequest request, HttpContext context, CancellationToken ct)
         where TEndpoint : ResultEndpoint<TRequest, TResult>
         where TRequest : notnull
         where TResult : IResult
         => Activate<TEndpoint>(context).HandleAsync(request, ct);
 
-    public static Task<TResult> ResultFromBody<TEndpoint, TRequest, TResult>(
+    public static Task<TResult> ResultFromBody<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest, TResult>(
         [FromBody] TRequest request, HttpContext context, CancellationToken ct)
         where TEndpoint : ResultEndpoint<TRequest, TResult>
         where TRequest : notnull
@@ -64,19 +64,19 @@ internal static class Handlers
         => Activate<TEndpoint>(context).HandleAsync(request, ct);
 
     // StreamEndpoint<TRequest, TItem>
-    public static IAsyncEnumerable<TItem> JsonStreamFromParameters<TEndpoint, TRequest, TItem>(
+    public static IAsyncEnumerable<TItem> JsonStreamFromParameters<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest, TItem>(
         [AsParameters] TRequest request, HttpContext context, CancellationToken ct)
         where TEndpoint : StreamEndpoint<TRequest, TItem>
         where TRequest : notnull
         => Activate<TEndpoint>(context).HandleAsync(request, ct);
 
-    public static IAsyncEnumerable<TItem> JsonStreamFromBody<TEndpoint, TRequest, TItem>(
+    public static IAsyncEnumerable<TItem> JsonStreamFromBody<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest, TItem>(
         [FromBody] TRequest request, HttpContext context, CancellationToken ct)
         where TEndpoint : StreamEndpoint<TRequest, TItem>
         where TRequest : notnull
         => Activate<TEndpoint>(context).HandleAsync(request, ct);
 
-    public static ServerSentEventsResult<TItem> EventStreamFromParameters<TEndpoint, TRequest, TItem>(
+    public static ServerSentEventsResult<TItem> EventStreamFromParameters<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest, TItem>(
         [AsParameters] TRequest request, HttpContext context, CancellationToken ct)
         where TEndpoint : StreamEndpoint<TRequest, TItem>
         where TRequest : notnull
@@ -84,7 +84,7 @@ internal static class Handlers
             Activate<TEndpoint>(context).HandleAsync(request, ct),
             EventTypes<TEndpoint>.Value);
 
-    public static ServerSentEventsResult<TItem> EventStreamFromBody<TEndpoint, TRequest, TItem>(
+    public static ServerSentEventsResult<TItem> EventStreamFromBody<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest, TItem>(
         [FromBody] TRequest request, HttpContext context, CancellationToken ct)
         where TEndpoint : StreamEndpoint<TRequest, TItem>
         where TRequest : notnull
@@ -92,16 +92,8 @@ internal static class Handlers
             Activate<TEndpoint>(context).HandleAsync(request, ct),
             EventTypes<TEndpoint>.Value);
 
-    private static TEndpoint Activate<TEndpoint>(HttpContext context) where TEndpoint : EndpointBase
-        => Factory<TEndpoint>.Create(context.RequestServices, null);
+    private const DynamicallyAccessedMemberTypes Ctors = DynamicallyAccessedMemberTypes.PublicConstructors;
 
-    private static class Factory<TEndpoint> where TEndpoint : EndpointBase
-    {
-        public static readonly ObjectFactory<TEndpoint> Create = ActivatorUtilities.CreateFactory<TEndpoint>([]);
-    }
-
-    internal static class EventTypes<TEndpoint>
-    {
-        public static string? Value;
-    }
+    private static TEndpoint Activate<[DynamicallyAccessedMembers(Ctors)] TEndpoint>(HttpContext context) where TEndpoint : EndpointBase
+        => Infrastructure.GeneratedEndpoints.Activate<TEndpoint>(context);
 }

@@ -52,3 +52,15 @@ public enum RequestBinding
     /// <summary>The whole contract is read from the JSON body.</summary>
     Body,
 }
+
+/// <summary>
+/// Writes a <see cref="StreamEndpoint{TRequest, TItem}"/> as Server-Sent Events (<c>text/event-stream</c>)
+/// instead of a JSON array. Declared on the class so it is visible at compile time, which the
+/// generated (trimming- and Native AOT-safe) registration needs.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public sealed class ServerSentEventsAttribute(string? eventType = null) : Attribute
+{
+    /// <summary>The event type written for each item, or <see langword="null"/> for none.</summary>
+    public string? EventType { get; } = eventType;
+}

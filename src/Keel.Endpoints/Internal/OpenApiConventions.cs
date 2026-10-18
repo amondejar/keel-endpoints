@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,24 +23,26 @@ internal static class OpenApiConventions
     }
 
     /// <summary>
-    /// True when .NET 10 validation is on (<c>AddValidation()</c>) and the contract, or a <c>[FromBody]</c>
-    /// member of it, is marked <c>[ValidatableType]</c>: the cases where the endpoint can answer 400.
+    /// True when .NET 10 validation is on (<c>AddValidation()</c>) and its resolvers know the contract, or a
+    /// <c>[FromBody]</c> member of it: the cases where the endpoint can answer 400.
     /// </summary>
-    public static bool UsesNativeValidation(IServiceProvider services, Type? requestType)
+    public static bool UsesNativeValidation(
+        IServiceProvider services,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? requestType)
     {
         if (requestType is null) return false;
-        // Resolvers is marked experimental (ASP0029) in .NET 10; it is the only public signal that
-        // AddValidation() was called. If it changes, this check is the one line to update.
-#pragma warning disable ASP0029
-        if (services.GetService<IOptions<ValidationOptions>>()?.Value.Resolvers.Count is not > 0) return false;
-#pragma warning restore ASP0029
+        if (services.GetService<IOptions<ValidationOptions>>()?.Value is not { } validation) return false;
 
-        if (IsValidatable(requestType)) return true;
+        // Ask the validation resolvers (what AddValidation() registered) rather than looking for
+        // [ValidatableType]: in a generated registration the .NET 10 generator finds contracts without it.
+        if (IsValidatable(validation, requestType)) return true;
         return requestType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Any(p => p.GetCustomAttributes(inherit: true).OfType<IFromBodyMetadata>().Any() && IsValidatable(p.PropertyType));
+            .Any(p => p.GetCustomAttributes(inherit: true).OfType<IFromBodyMetadata>().Any() && IsValidatable(validation, p.PropertyType));
     }
 
-    // Matched by name: the attribute is marked experimental in .NET 10.
-    private static bool IsValidatable(Type type) =>
-        type.GetCustomAttributes(inherit: false).Any(a => a.GetType().Name == "ValidatableTypeAttribute");
+    // The validation resolver API is marked experimental (ASP0029) in .NET 10.
+#pragma warning disable ASP0029
+    private static bool IsValidatable(ValidationOptions validation, Type type) =>
+        validation.TryGetValidatableTypeInfo(type, out _);
+#pragma warning restore ASP0029
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -12,29 +13,30 @@ internal sealed record EndpointDescriptor(
     Delegate Handler,
     Type? RequestType)
 {
+    internal const string ReflectionMessage =
+        "Discovers and binds endpoint classes through reflection. For trimming and Native AOT, call the generated " +
+        "app.MapKeelEndpoints(prefix) instead, which registers every endpoint explicitly at compile time.";
+
+    [RequiresUnreferencedCode(ReflectionMessage)]
+    [RequiresDynamicCode(ReflectionMessage)]
     public static EndpointDescriptor Create(Type endpointType)
     {
         if (endpointType.IsAbstract || endpointType.IsGenericTypeDefinition || !typeof(EndpointBase).IsAssignableFrom(endpointType))
             throw new InvalidOperationException($"{endpointType} is not a concrete endpoint class.");
 
-        var route = endpointType.GetCustomAttribute<EndpointRouteAttribute>(inherit: false)
-            ?? throw new InvalidOperationException(
-                $"Endpoint {endpointType.FullName} declares no route. Add [Get(\"...\")], [Post(\"...\")] or another route attribute.");
-
-        // Configure runs on an instance created without its constructor, so endpoints can keep
-        // ordinary constructor injection. Configure must therefore not touch injected state.
-        var options = new EndpointOptions();
-        ((EndpointBase)RuntimeHelpers.GetUninitializedObject(endpointType)).Configure(options);
+        var route = RouteOf(endpointType);
+        var options = ConfigureOptions(endpointType);
 
         var (shape, args) = Shape(endpointType);
         var binding = options.Binding ?? DefaultBinding(route.Method, args.Length > 0 ? args[0] : null, shape);
-        var handlerName = HandlerName(shape, binding, options.StreamFormat);
+        var (format, eventType) = Stream(endpointType, options);
+        var handlerName = HandlerName(shape, binding, format);
 
-        if (shape == EndpointShape.Stream && options.StreamFormat == StreamFormat.ServerSentEvents)
+        if (shape == EndpointShape.Stream && format == StreamFormat.ServerSentEvents)
         {
-            typeof(Handlers.EventTypes<>).MakeGenericType(endpointType)
-                .GetField(nameof(Handlers.EventTypes<object>.Value))!
-                .SetValue(null, options.EventType);
+            typeof(EventTypes<>).MakeGenericType(endpointType)
+                .GetField(nameof(EventTypes<object>.Value))!
+                .SetValue(null, eventType);
         }
 
         var method = typeof(Handlers).GetMethod(handlerName, BindingFlags.Public | BindingFlags.Static)!
@@ -43,6 +45,33 @@ internal sealed record EndpointDescriptor(
 
         var requestType = shape == EndpointShape.WithoutRequest ? null : args[0];
         return new EndpointDescriptor(endpointType, route, options, method.CreateDelegate(delegateType), requestType);
+    }
+
+    public static EndpointRouteAttribute RouteOf(Type endpointType) =>
+        endpointType.GetCustomAttribute<EndpointRouteAttribute>(inherit: false)
+        ?? throw new InvalidOperationException(
+            $"Endpoint {endpointType.FullName} declares no route. Add [Get(\"...\")], [Post(\"...\")] or another route attribute.");
+
+    /// <summary>
+    /// Runs <see cref="EndpointBase.Configure"/> on an instance created without its constructor, so
+    /// endpoints keep ordinary constructor injection. Configure must therefore not touch injected state.
+    /// </summary>
+    public static EndpointOptions ConfigureOptions(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.NonPublicConstructors)]
+        Type endpointType)
+    {
+        var options = new EndpointOptions();
+        ((EndpointBase)RuntimeHelpers.GetUninitializedObject(endpointType)).Configure(options);
+        return options;
+    }
+
+    /// <summary>The stream format: <see cref="ServerSentEventsAttribute"/> or <c>options.StreamFormat</c>.</summary>
+    public static (StreamFormat Format, string? EventType) Stream(Type endpointType, EndpointOptions options)
+    {
+        var attribute = endpointType.GetCustomAttribute<ServerSentEventsAttribute>(inherit: false);
+        return attribute is not null
+            ? (StreamFormat.ServerSentEvents, options.EventType ?? attribute.EventType)
+            : (options.StreamFormat, options.EventType);
     }
 
     private static (EndpointShape, Type[]) Shape(Type endpointType)
@@ -88,4 +117,10 @@ internal sealed record EndpointDescriptor(
     }
 
     private enum EndpointShape { Response, NoContent, WithoutRequest, Result, Stream }
+}
+
+/// <summary>The SSE event type per endpoint, read by the handler on each request.</summary>
+internal static class EventTypes<TEndpoint>
+{
+    public static string? Value;
 }

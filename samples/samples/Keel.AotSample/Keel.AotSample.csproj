@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    A Native AOT build of Keel.Endpoints. CI publishes it with every warning as an error (trimming and
+    AOT warnings included) and calls its endpoints, so a change that breaks AOT fails the build.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Keel.Endpoints\Keel.Endpoints.csproj" />
+    <!-- With the NuGet package, the analyzers, generator and build targets come with it; here they are wired by hand. -->
+    <ProjectReference Include="..\..\src\Keel.Endpoints.Analyzers\Keel.Endpoints.Analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <Import Project="..\..\src\Keel.Endpoints\build\Keel.Endpoints.targets" />
+
+</Project>

@@ -13,7 +13,7 @@ builder.Services.AddKeelEndpoints();
 builder.Services.AddProblemDetails();
 builder.Services.AddKeelFluentValidation(typeof(Program).Assembly); // registers IValidator<T> types
 
-app.MapKeelEndpoints(typeof(Program).Assembly, "/api")
+app.MapKeelEndpoints("/api")
    .RequireAuthorization()
    .WithFluentValidation();
 ```

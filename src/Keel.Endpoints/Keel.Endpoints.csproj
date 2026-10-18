@@ -4,6 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <PackageId>Keel.Endpoints</PackageId>
+    <!-- Turns on the trimming and AOT analyzers for this library: every reflective path must say so. -->
+    <IsAotCompatible>true</IsAotCompatible>
     <Description>One class per endpoint for ASP.NET Core Minimal APIs. Binding, validation and OpenAPI stay native; authorization is fail-closed; analyzers catch route mistakes at build time.</Description>
   </PropertyGroup>
 
@@ -28,6 +30,7 @@
     <None Include="..\Keel.Endpoints.Analyzers\bin\$(Configuration)\$(KeelAnalyzerTfm)\Keel.Endpoints.Analyzers.dll"
           Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="build\Keel.Endpoints.targets" Pack="true" PackagePath="build;buildTransitive" />
   </ItemGroup>
 
 </Project>

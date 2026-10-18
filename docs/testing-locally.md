@@ -9,7 +9,7 @@ dotnet build
 dotnet run --project tests/Keel.Endpoints.Tests
 ```
 
-Expected: `33 passed, 0 failed` (`32` in an offline build, which skips the generated OpenAPI document test). The build itself proves the analyzers load: warnings are errors here.
+Expected: `38 passed, 0 failed` (`37` in an offline build, which skips the generated OpenAPI document test). The build itself proves the analyzers load: warnings are errors here.
 
 ## 2. Play with the sample API
 
@@ -64,3 +64,12 @@ dotnet add package Keel.Endpoints --prerelease
 To pick up a rebuilt package with the same version, clear the cache first:
 `dotnet nuget locals global-packages --clear`. Remove the source when done:
 `dotnet nuget remove source keel-local`.
+
+## 5. Native AOT
+
+```bash
+bash eng/aot-smoke.sh linux-x64        # or win-x64 / osx-arm64; publishes, runs and calls the AOT sample
+```
+
+Native AOT needs the platform toolchain: on Windows, Visual Studio's "Desktop development with C++"
+workload; on Linux, `clang` and `zlib1g-dev`.

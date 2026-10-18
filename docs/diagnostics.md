@@ -43,3 +43,11 @@ experimental in .NET 10; suppress `ASP0029` in the project file.
 
 Limitation: the analyzer reads the default binding from the HTTP method and `[BindRequest]`. A binding set
 in `Configure` through `options.Binding` is not visible to it.
+
+## KEEL005
+
+**Endpoint class cannot be registered by the generated code.** The generated `MapKeelEndpoints(prefix)`
+lives in the same project but outside the endpoint class, so it can only name classes that are public or
+internal and not nested inside a private or protected type. The class is left out of the registration.
+
+**Fix:** make the class `public` or `internal`, or move it out of the private type.

@@ -10,6 +10,8 @@ internal static class Harness
 
     public static void Test(string name, Func<Task> body) => Tests.Add((name, body));
 
+    public static void Test(string name, Action body) => Tests.Add((name, () => { body(); return Task.CompletedTask; }));
+
     public static async Task<int> RunAsync()
     {
         var failed = 0;

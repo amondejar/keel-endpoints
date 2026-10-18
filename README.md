@@ -25,7 +25,7 @@ builder.Services.AddKeelEndpoints();
 builder.Services.AddValidation();       // .NET 10 native validation
 builder.Services.AddProblemDetails();   // RFC 9457 errors
 
-app.MapKeelEndpoints(typeof(Program).Assembly, "/api").RequireAuthorization();
+app.MapKeelEndpoints("/api").RequireAuthorization();   // generated at compile time, no reflection
 ```
 
 ```bash
@@ -36,9 +36,34 @@ dotnet add package Keel.Endpoints --prerelease
 
 Minimal APIs are a great runtime and an awkward way to organize a large API. Keel.Endpoints gives each
 operation a class, so a feature is one folder: its contract, its handler, its tests. Everything else is
-ASP.NET Core: each endpoint is registered as an ordinary Minimal API handler, so `RequestDelegateFactory`
-binds it, .NET 10 validates it, typed results document it, and every `RouteHandlerBuilder` convention
-you already know still applies.
+ASP.NET Core: each endpoint is registered as an ordinary Minimal API handler, so ASP.NET Core binds it,
+.NET 10 validates it, typed results document it, and every `RouteHandlerBuilder` convention you already
+know still applies.
+
+## Registration and Native AOT
+
+`app.MapKeelEndpoints(prefix)` is **generated at compile time**: a source generator in the package writes
+one explicit, typed `MapMethods` call per endpoint class in the project. No assembly scanning, no
+`MakeGenericMethod`, nothing for the trimmer to remove.
+
+With `<PublishAot>true</PublishAot>` the package goes one step further. ASP.NET Core's Request Delegate
+Generator, which makes Minimal API binding AOT-safe, cannot see code written by another generator, so the
+build compiles the project once with generated files written to disk and adds Keel's registration as
+ordinary source. The Request Delegate Generator then generates native binding for every endpoint, and the
+.NET 10 validation generator finds every contract on its own (no `[ValidatableType]` needed). CI publishes
+[`samples/Keel.AotSample`](samples/Keel.AotSample) natively with every warning as an error and calls each
+endpoint.
+
+| | Generated `MapKeelEndpoints(prefix)` | Reflective `MapKeelEndpoints(assembly, prefix)` |
+| --- | --- | --- |
+| Discovery | Compile time | Startup, `Assembly.GetTypes()` |
+| Trimming / Native AOT | Supported | Not supported (annotated `[RequiresUnreferencedCode]`) |
+| Endpoints from other projects | Only this project's | Any assembly you pass |
+| Binding / stream format | From the HTTP method, `[BindRequest]`, `[ServerSentEvents]` | Also from `Configure` |
+
+The generated registration covers the endpoint classes in the project that calls it. Under Native AOT, JSON
+types still need a `JsonSerializerContext` (see the AOT sample), as in any AOT Minimal API.
+`KeelRegistrationFile` turns the two-step build on or off explicitly.
 
 ## Endpoint shapes
 
@@ -65,8 +90,9 @@ public sealed record RenameInvoice(string InvoiceId, [property: FromBody] Rename
 
 Call `AddValidation()` and mark contracts with `[ValidatableType]`. DataAnnotations run before the
 handler, and failures return `400` problem details. The .NET 10 generator only discovers types it sees
-in `Map*` calls, which is why endpoint-class contracts need the attribute; analyzer **KEEL004** tells you
-when it is missing.
+in `Map*` calls in ordinary source, which is why endpoint-class contracts need the attribute; analyzer
+**KEEL004** tells you when it is missing. Under Native AOT the registration is ordinary source, so the
+attribute is not needed there and KEEL004 stays quiet.
 
 ## Fail-closed authorization
 
@@ -95,13 +121,12 @@ injected state.
 
 ## Streaming
 
+A `StreamEndpoint` writes a JSON array by default. Mark it `[ServerSentEvents]` for `text/event-stream`:
+
 ```csharp
-[Get("invoices/events")]
+[Get("invoices/events"), ServerSentEvents("invoice")]
 public sealed class Endpoint : StreamEndpoint<WatchInvoices, InvoiceEvent>
 {
-    public override void Configure(EndpointOptions options) =>
-        (options.StreamFormat, options.EventType) = (StreamFormat.ServerSentEvents, "invoice");
-
     public override async IAsyncEnumerable<InvoiceEvent> HandleAsync(WatchInvoices request,
         [EnumeratorCancellation] CancellationToken ct) { /* yield return ... */ }
 }
@@ -132,6 +157,7 @@ Shipped inside the package. See [docs/diagnostics.md](docs/diagnostics.md).
 | KEEL002 | A route parameter with no matching contract member |
 | KEEL003 | A route parameter on a contract read from the body |
 | KEEL004 | A contract with validation rules but no `[ValidatableType]` |
+| KEEL005 | An endpoint class the generated registration cannot reach (private or nested in a private type) |
 
 ## Testing
 
@@ -150,14 +176,14 @@ filter that runs each argument's registered `IValidator<T>` and returns the same
 
 ```csharp
 builder.Services.AddKeelFluentValidation(typeof(Program).Assembly);
-app.MapKeelEndpoints(typeof(Program).Assembly, "/api").RequireAuthorization().WithFluentValidation();
+app.MapKeelEndpoints("/api").RequireAuthorization().WithFluentValidation();
 ```
 
 See [its README](src/Keel.Endpoints.FluentValidation/README.md).
 
 ## Roadmap
 
-- **0.2** Native AOT: a source generator for explicit registration.
+- **0.2** Native AOT: generated registration (done, `0.2.0-preview`).
 - **0.3** Group configuration per folder, `dotnet new` templates, code fixes.
 - **0.4** A route and contract manifest with breaking-change checks in CI.
 - **1.0** Public API frozen for two previews, full docs, benchmark within 5% of a hand-written Minimal API.

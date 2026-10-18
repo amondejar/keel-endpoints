@@ -9,4 +9,5 @@ OpenApiTests.Register();
 OpenApiDocumentTests.Register();
 #endif
 AnalyzerTests.Register();
+GeneratorTests.Register();
 return await Harness.RunAsync();

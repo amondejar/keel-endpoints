@@ -32,8 +32,9 @@ public static class SampleApp
         app.UseAuthentication();
         app.UseAuthorization();
 
+        // Generated at compile time: every endpoint class, registered explicitly (no reflection, AOT-safe).
         // Every endpoint requires an authenticated caller unless it says [AllowAnonymous].
-        app.MapKeelEndpoints(typeof(SampleApp).Assembly, "/api").RequireAuthorization();
+        app.MapKeelEndpoints("/api").RequireAuthorization();
         app.MapApiReference();                 // /openapi/v1.json and /scalar, Development only
 
         return app;

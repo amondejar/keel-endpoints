@@ -20,3 +20,14 @@ jobs:
         with:
           name: packages
           path: artifacts/*
+
+  native-aot:
+    # Publishes samples/Keel.AotSample with Native AOT (any trimming or AOT warning fails the build),
+    # runs the native binary and calls each endpoint.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: bash eng/aot-smoke.sh linux-x64
