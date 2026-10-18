@@ -6,6 +6,17 @@
     <NoWarn>$(NoWarn);ASP0029</NoWarn>
   </PropertyGroup>
 
+  <!-- OpenAPI document and Scalar API reference (see ApiReference.cs). Skipped in offline builds. -->
+  <ItemGroup Condition="'$(KeelOfflineRoslyn)' != 'true'">
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <!-- Pins the transitive Microsoft.OpenApi past GHSA-v5pm-xwqc-g5wc (fixed in 2.7.5). -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.18.0" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(KeelOfflineRoslyn)' != 'true'">
+    <DefineConstants>$(DefineConstants);KEEL_OPENAPI</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Keel.Endpoints\Keel.Endpoints.csproj" />
     <!-- In a project that uses the NuGet package the analyzers come with it; here they are referenced directly. -->

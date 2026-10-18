@@ -13,6 +13,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - The `400` validation problem response is documented for contracts validated by .NET 10 validation
   and for endpoints validated by `WithFluentValidation()`.
 - Tests over the ApiExplorer descriptions and, in CI, over the generated OpenAPI document.
+- The sample serves its OpenAPI document and a Scalar API reference (`/scalar`) in Development, with
+  the `X-Api-Key` header declared so requests can be authenticated from the UI.
 
 ## [0.1.0-preview.2] - 2026-10-18
 

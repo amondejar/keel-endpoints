@@ -21,9 +21,9 @@
   <ItemGroup Condition="'$(KeelOfflineRoslyn)' != 'true'">
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
     <!-- Generates the real OpenAPI document in OpenApiDocumentTests (not available offline). -->
-	  <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
-	  <!-- Pins the transitive Microsoft.OpenApi past GHSA-v5pm-xwqc-g5wc (fixed in 2.7.5). -->
-	  <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
+    <!-- Pins the transitive Microsoft.OpenApi past GHSA-v5pm-xwqc-g5wc (fixed in 2.7.5). -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
   </ItemGroup>
   <PropertyGroup Condition="'$(KeelOfflineRoslyn)' != 'true'">
     <DefineConstants>$(DefineConstants);KEEL_OPENAPI</DefineConstants>

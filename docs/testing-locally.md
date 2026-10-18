@@ -17,7 +17,11 @@ Expected: `33 passed, 0 failed` (`32` in an offline build, which skips the gener
 dotnet run --project samples/Keel.Sample
 ```
 
-Then open `samples/Keel.Sample/Keel.Sample.http` and send the requests in order, or use curl:
+The browser opens the **Scalar** API reference at `http://localhost:5000/scalar`, with every endpoint
+grouped by feature. Open its authentication panel, enter `demo` (or `admin`) as the `X-Api-Key`, and try
+the requests from there. The raw OpenAPI document is at `http://localhost:5000/openapi/v1.json`.
+
+You can also open `samples/Keel.Sample/Keel.Sample.http` and send the requests in order, or use curl:
 
 ```bash
 curl http://localhost:5000/api/health

@@ -109,6 +109,10 @@ public sealed class Endpoint : StreamEndpoint<WatchInvoices, InvoiceEvent>
 
 ## OpenAPI
 
+The sample shows the full setup: `AddOpenApi()`, `MapOpenApi()` and a [Scalar](https://scalar.com) API
+reference (`MapScalarApiReference()`), with the API key header declared. Run it and the browser opens
+`/scalar`.
+
 Endpoints describe themselves through ASP.NET Core's own metadata, so `AddOpenApi()` / `MapOpenApi()`
 (or Swashbuckle, NSwag, Scalar) document routes, parameters, bodies and every typed result. Keel adds two
 things the shared handler would otherwise get wrong or leave out:

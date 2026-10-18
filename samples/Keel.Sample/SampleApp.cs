@@ -24,6 +24,8 @@ public static class SampleApp
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("admin", p => p.RequireRole("admin"));
 
+        builder.AddApiReference();             // OpenAPI document + Scalar UI (Development)
+
         configure?.Invoke(builder);
 
         var app = builder.Build();
@@ -32,6 +34,7 @@ public static class SampleApp
 
         // Every endpoint requires an authenticated caller unless it says [AllowAnonymous].
         app.MapKeelEndpoints(typeof(SampleApp).Assembly, "/api").RequireAuthorization();
+        app.MapApiReference();                 // /openapi/v1.json and /scalar, Development only
 
         return app;
     }

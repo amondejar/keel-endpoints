@@ -15,9 +15,9 @@ internal static class OpenApiDocumentTests
     {
         Test("OpenAPI document: operations, tags, parameters and responses", async () =>
         {
-            await using var app = SampleApp.Create(["--urls", "http://127.0.0.1:0", "--Logging:LogLevel:Default=Warning"],
-                b => b.Services.AddOpenApi());
-            app.MapOpenApi();
+            // The sample registers OpenAPI and Scalar itself, in Development.
+            await using var app = SampleApp.Create(["--urls", "http://127.0.0.1:0", "--environment", "Development",
+                "--Logging:LogLevel:Default=Warning"]);
             await app.StartAsync();
 
             using var http = new HttpClient { BaseAddress = new Uri(app.Urls.First()) };
@@ -38,6 +38,15 @@ internal static class OpenApiDocumentTests
 
             var list = paths.GetProperty("/api/invoices").GetProperty("get");
             Assert.Equal("query", list.GetProperty("parameters")[0].GetProperty("in").GetString());
+
+            // The X-Api-Key scheme is declared, so Scalar can authenticate requests.
+            var scheme = document.RootElement.GetProperty("components").GetProperty("securitySchemes").GetProperty("ApiKey");
+            Assert.Equal("apiKey", scheme.GetProperty("type").GetString());
+            Assert.Equal("X-Api-Key", scheme.GetProperty("name").GetString());
+
+            // And the Scalar page is served.
+            var scalar = await http.GetAsync("/scalar");
+            Assert.Equal(System.Net.HttpStatusCode.OK, scalar.StatusCode);
 
             await app.StopAsync();
         });
