@@ -196,10 +196,13 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
 
         foreach (var e in endpoints.OrderBy(e => e.TypeName, StringComparer.Ordinal))
         {
-            var activate = $"{Gen}.Activate<{e.TypeName}>(context)";
+            // The request's IServiceProvider rather than HttpContext: with an endpoint filter (validation, say),
+            // each extra argument costs every request, and an HttpContext argument costs ~200 bytes (see benchmarks/).
+            var activate = $"{Gen}.Activate<{e.TypeName}>(services)";
+            var services = "[global::Microsoft.AspNetCore.Mvc.FromServices] global::System.IServiceProvider services, global::System.Threading.CancellationToken cancellationToken";
             var parameters = e.Shape == Shape.WithoutRequest
-                ? $"{Http}.HttpContext context, global::System.Threading.CancellationToken cancellationToken"
-                : $"[{(e.Body ? "global::Microsoft.AspNetCore.Mvc.FromBody" : Http + ".AsParameters")}] {e.Request} request, {Http}.HttpContext context, global::System.Threading.CancellationToken cancellationToken";
+                ? services
+                : $"[{(e.Body ? "global::Microsoft.AspNetCore.Mvc.FromBody" : Http + ".AsParameters")}] {e.Request} request, {services}";
 
             string lambda = e.Shape switch
             {

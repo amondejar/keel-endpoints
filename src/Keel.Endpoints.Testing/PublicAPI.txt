@@ -1,0 +1,77 @@
+Keel.Endpoints.Testing.ApiChangeKind.Breaking
+Keel.Endpoints.Testing.ApiChangeKind.Compatible
+Keel.Endpoints.Testing.ApiChangeKind.Security
+Keel.Endpoints.Testing.ApiManifestUpdate.All
+Keel.Endpoints.Testing.ApiManifestUpdate.Compatible
+Keel.Endpoints.Testing.ApiManifestUpdate.None
+enum Keel.Endpoints.Testing.ApiChangeKind
+enum Keel.Endpoints.Testing.ApiManifestUpdate
+public Keel.Endpoints.Testing.ApiChange(Keel.Endpoints.Testing.ApiChangeKind Kind, string Endpoint, string Description)
+public Keel.Endpoints.Testing.ApiChangeKind Keel.Endpoints.Testing.ApiChange.Kind { get; init; }
+public Keel.Endpoints.Testing.ApiManifest()
+public Keel.Endpoints.Testing.ApiManifestEndpoint()
+public Keel.Endpoints.Testing.ApiManifestException(string message, System.Collections.Generic.IReadOnlyList<Keel.Endpoints.Testing.ApiChange> changes)
+public Keel.Endpoints.Testing.ApiManifestOptions()
+public Keel.Endpoints.Testing.ApiManifestType()
+public Keel.Endpoints.Testing.ApiManifestUpdate? Keel.Endpoints.Testing.ApiManifestOptions.Update { get; set; }
+public Keel.Endpoints.Testing.EndpointClient(System.Net.Http.HttpClient http, string prefix = "", System.Text.Json.JsonSerializerOptions? json = null)
+public Keel.Endpoints.Testing.EndpointResponse<T>(System.Net.HttpStatusCode StatusCode, T Value, string Body)
+public System.Collections.Generic.IReadOnlyDictionary<string, Keel.Endpoints.Testing.ApiManifestEndpoint> Keel.Endpoints.Testing.ApiManifest.Endpoints { get; init; }
+public System.Collections.Generic.IReadOnlyDictionary<string, Keel.Endpoints.Testing.ApiManifestType> Keel.Endpoints.Testing.ApiManifest.Types { get; init; }
+public System.Collections.Generic.IReadOnlyDictionary<string, string> Keel.Endpoints.Testing.ApiManifestEndpoint.Form { get; init; }
+public System.Collections.Generic.IReadOnlyDictionary<string, string> Keel.Endpoints.Testing.ApiManifestEndpoint.Header { get; init; }
+public System.Collections.Generic.IReadOnlyDictionary<string, string> Keel.Endpoints.Testing.ApiManifestEndpoint.Query { get; init; }
+public System.Collections.Generic.IReadOnlyDictionary<string, string> Keel.Endpoints.Testing.ApiManifestEndpoint.Responses { get; init; }
+public System.Collections.Generic.IReadOnlyDictionary<string, string>? Keel.Endpoints.Testing.ApiManifestType.Properties { get; init; }
+public System.Collections.Generic.IReadOnlyList<Keel.Endpoints.Testing.ApiChange> Keel.Endpoints.Testing.ApiManifestException.Changes { get; }
+public System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, string>> Keel.Endpoints.Testing.ApiManifestEndpoint.Path { get; init; }
+public System.Collections.Generic.IReadOnlyList<string> Keel.Endpoints.Testing.ApiManifestEndpoint.Policies { get; init; }
+public System.Collections.Generic.IReadOnlyList<string> Keel.Endpoints.Testing.ApiManifestEndpoint.Roles { get; init; }
+public System.Collections.Generic.IReadOnlyList<string> Keel.Endpoints.Testing.ApiManifestEndpoint.Schemes { get; init; }
+public System.Collections.Generic.IReadOnlyList<string>? Keel.Endpoints.Testing.ApiManifestType.Values { get; init; }
+public System.Func<Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription, bool>? Keel.Endpoints.Testing.ApiManifestOptions.Include { get; set; }
+public System.Net.Http.HttpClient Keel.Endpoints.Testing.EndpointClient.Http { get; }
+public System.Net.Http.HttpRequestMessage Keel.Endpoints.Testing.EndpointClient.CreateRequest(System.Type endpointType, object? request)
+public System.Net.HttpStatusCode Keel.Endpoints.Testing.EndpointResponse<T>.StatusCode { get; init; }
+public System.Threading.Tasks.Task<Keel.Endpoints.Testing.EndpointResponse<TResponse>> Keel.Endpoints.Testing.EndpointClient.SendAsync<TEndpoint, TResponse>(object? request = null, System.Threading.CancellationToken cancellationToken = default) where TEndpoint : Keel.Endpoints.EndpointBase
+public System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage> Keel.Endpoints.Testing.EndpointClient.SendAsync<TEndpoint>(object? request = null, System.Threading.CancellationToken cancellationToken = default) where TEndpoint : Keel.Endpoints.EndpointBase
+public T Keel.Endpoints.Testing.EndpointResponse<T>.Value { get; init; }
+public bool Keel.Endpoints.Testing.ApiChange.Equals(Keel.Endpoints.Testing.ApiChange? other)
+public bool Keel.Endpoints.Testing.EndpointResponse<T>.Equals(Keel.Endpoints.Testing.EndpointResponse<T>? other)
+public const int Keel.Endpoints.Testing.ApiManifest.CurrentFormat = 1
+public int Keel.Endpoints.Testing.ApiManifest.Format { get; init; }
+public override bool Keel.Endpoints.Testing.ApiChange.Equals(object? obj)
+public override bool Keel.Endpoints.Testing.EndpointResponse<T>.Equals(object? obj)
+public override int Keel.Endpoints.Testing.ApiChange.GetHashCode()
+public override int Keel.Endpoints.Testing.EndpointResponse<T>.GetHashCode()
+public override string Keel.Endpoints.Testing.ApiChange.ToString()
+public override string Keel.Endpoints.Testing.ApiManifestEndpoint.ToString()
+public override string Keel.Endpoints.Testing.EndpointResponse<T>.ToString()
+public required string Keel.Endpoints.Testing.ApiManifestEndpoint.Method { get; init; }
+public required string Keel.Endpoints.Testing.ApiManifestEndpoint.Route { get; init; }
+public static Keel.Endpoints.Testing.ApiManifest Keel.Endpoints.Testing.ApiManifest.Create(System.IServiceProvider services, Keel.Endpoints.Testing.ApiManifestOptions? options = null)
+public static Keel.Endpoints.Testing.ApiManifest Keel.Endpoints.Testing.ApiManifest.Load(string path)
+public static Keel.Endpoints.Testing.ApiManifest Keel.Endpoints.Testing.ApiManifest.Parse(string json)
+public static System.Collections.Generic.IReadOnlyList<Keel.Endpoints.Testing.ApiChange> Keel.Endpoints.Testing.ApiManifest.Compare(Keel.Endpoints.Testing.ApiManifest baseline, Keel.Endpoints.Testing.ApiManifest current)
+public static bool Keel.Endpoints.Testing.ApiChange.op_Equality(Keel.Endpoints.Testing.ApiChange? left, Keel.Endpoints.Testing.ApiChange? right)
+public static bool Keel.Endpoints.Testing.ApiChange.op_Inequality(Keel.Endpoints.Testing.ApiChange? left, Keel.Endpoints.Testing.ApiChange? right)
+public static bool Keel.Endpoints.Testing.EndpointResponse<T>.op_Equality(Keel.Endpoints.Testing.EndpointResponse<T>? left, Keel.Endpoints.Testing.EndpointResponse<T>? right)
+public static bool Keel.Endpoints.Testing.EndpointResponse<T>.op_Inequality(Keel.Endpoints.Testing.EndpointResponse<T>? left, Keel.Endpoints.Testing.EndpointResponse<T>? right)
+public static void Keel.Endpoints.Testing.ApiManifest.Verify(System.IServiceProvider services, string path = "api.manifest.json", Keel.Endpoints.Testing.ApiManifestOptions? options = null, string callerFilePath = "")
+public string Keel.Endpoints.Testing.ApiChange.Description { get; init; }
+public string Keel.Endpoints.Testing.ApiChange.Endpoint { get; init; }
+public string Keel.Endpoints.Testing.ApiManifest.ToJson()
+public string Keel.Endpoints.Testing.ApiManifestEndpoint.Authorization { get; init; }
+public string Keel.Endpoints.Testing.EndpointResponse<T>.Body { get; init; }
+public string? Keel.Endpoints.Testing.ApiManifestEndpoint.Body { get; init; }
+public string? Keel.Endpoints.Testing.ApiManifestEndpoint.Operation { get; init; }
+public void Keel.Endpoints.Testing.ApiChange.Deconstruct(out Keel.Endpoints.Testing.ApiChangeKind Kind, out string Endpoint, out string Description)
+public void Keel.Endpoints.Testing.EndpointResponse<T>.Deconstruct(out System.Net.HttpStatusCode StatusCode, out T Value, out string Body)
+sealed class Keel.Endpoints.Testing.ApiChange : System.IEquatable<Keel.Endpoints.Testing.ApiChange>
+sealed class Keel.Endpoints.Testing.ApiManifest
+sealed class Keel.Endpoints.Testing.ApiManifestEndpoint
+sealed class Keel.Endpoints.Testing.ApiManifestException : System.Exception
+sealed class Keel.Endpoints.Testing.ApiManifestOptions
+sealed class Keel.Endpoints.Testing.ApiManifestType
+sealed class Keel.Endpoints.Testing.EndpointClient
+sealed class Keel.Endpoints.Testing.EndpointResponse<T> : System.IEquatable<Keel.Endpoints.Testing.EndpointResponse<T>>

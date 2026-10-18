@@ -18,10 +18,10 @@ public static class GeneratedEndpoints
     private const DynamicallyAccessedMemberTypes Ctors = DynamicallyAccessedMemberTypes.PublicConstructors;
     private const DynamicallyAccessedMemberTypes AllCtors = Ctors | DynamicallyAccessedMemberTypes.NonPublicConstructors;
 
-    /// <summary>Creates the endpoint for one request, with constructor injection.</summary>
-    public static TEndpoint Activate<[DynamicallyAccessedMembers(Ctors)] TEndpoint>(HttpContext context)
+    /// <summary>Creates the endpoint for one request from the request's services, with constructor injection.</summary>
+    public static TEndpoint Activate<[DynamicallyAccessedMembers(Ctors)] TEndpoint>(IServiceProvider requestServices)
         where TEndpoint : EndpointBase
-        => Factory<TEndpoint>.Create(context.RequestServices, null);
+        => Factory<TEndpoint>.Create(requestServices, null);
 
     /// <summary>The SSE event type of a streaming endpoint, set when it is mapped.</summary>
     public static string? EventType<TEndpoint>() where TEndpoint : EndpointBase => EventTypes<TEndpoint>.Value;
@@ -34,7 +34,7 @@ public static class GeneratedEndpoints
     public static RouteHandlerBuilder Apply<[DynamicallyAccessedMembers(AllCtors)] TEndpoint>(
         RouteHandlerBuilder builder,
         IEndpointRouteBuilder app,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? requestType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)] Type? requestType,
         RequestBinding? generatedBinding,
         bool generatedServerSentEvents,
         EndpointGroup[] groups)

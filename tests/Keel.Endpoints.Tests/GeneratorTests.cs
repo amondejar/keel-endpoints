@@ -56,7 +56,7 @@ internal static class GeneratorTests
             Assert.Equal("", string.Join(",", errors));
             Assert.True(source.Contains("[global::Microsoft.AspNetCore.Http.AsParameters] global::Rename request")); // PUT, but [BindRequest]
             Assert.True(source.Contains("TypedResults.ServerSentEvents("));
-            Assert.True(source.Contains("static (global::Microsoft.AspNetCore.Http.HttpContext context, global::System.Threading.CancellationToken cancellationToken) => global::Keel.Endpoints.Infrastructure.GeneratedEndpoints.Activate<global::PingEndpoint>(context).HandleAsync(cancellationToken)"));
+            Assert.True(source.Contains("static ([global::Microsoft.AspNetCore.Mvc.FromServices] global::System.IServiceProvider services, global::System.Threading.CancellationToken cancellationToken) => global::Keel.Endpoints.Infrastructure.GeneratedEndpoints.Activate<global::PingEndpoint>(services).HandleAsync(cancellationToken)"));
         });
 
         Test("Generator: KEEL005 for a private nested endpoint, which is left out", () =>

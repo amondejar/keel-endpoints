@@ -12,6 +12,11 @@ Thanks for helping. Issues and pull requests are welcome.
 - **Add a test** for every behavior change, and keep `dotnet build` free of warnings (they are errors).
 - **New analyzer rules** get the next free `KEELnnn` id, a section in `docs/diagnostics.md` and a test
   with a positive and a negative case.
+- **Public API changes** show up as a failing test against `src/*/PublicAPI.txt`. Update the files with
+  `KEEL_UPDATE_PUBLIC_API=1` and say why in the pull request. During the 1.0 freeze only additions are
+  accepted, and only with a good reason (see `docs/compatibility.md`).
+- **Performance-sensitive changes** (anything on the request path) come with a benchmark run:
+  `dotnet run -c Release --project benchmarks/Keel.Endpoints.Benchmarks`.
 
 ## Building and testing
 

@@ -42,3 +42,14 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: bash eng/template-smoke.sh linux-x64
+
+  benchmarks:
+    # Keeps the benchmark building and running. Shared runners are too noisy for the 5% check; see
+    # benchmarks/Keel.Endpoints.Benchmarks/README.md.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet run -c Release --project benchmarks/Keel.Endpoints.Benchmarks -- --quick

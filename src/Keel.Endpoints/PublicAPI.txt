@@ -1,0 +1,80 @@
+Keel.Endpoints.RequestBinding.Body
+Keel.Endpoints.RequestBinding.Parameters
+Keel.Endpoints.StreamFormat.JsonArray
+Keel.Endpoints.StreamFormat.ServerSentEvents
+[EditorBrowsable(Never)] static class Keel.Endpoints.Infrastructure.GeneratedEndpoints
+abstract class Keel.Endpoints.Endpoint<TRequest, TResponse> : Keel.Endpoints.EndpointBase
+abstract class Keel.Endpoints.Endpoint<TRequest> : Keel.Endpoints.EndpointBase
+abstract class Keel.Endpoints.EndpointBase
+abstract class Keel.Endpoints.EndpointGroup
+abstract class Keel.Endpoints.EndpointRouteAttribute : System.Attribute
+abstract class Keel.Endpoints.EndpointWithoutRequest<TResponse> : Keel.Endpoints.EndpointBase
+abstract class Keel.Endpoints.ResultEndpoint<TRequest, TResult> : Keel.Endpoints.EndpointBase where TResult : Microsoft.AspNetCore.Http.IResult
+abstract class Keel.Endpoints.StreamEndpoint<TRequest, TItem> : Keel.Endpoints.EndpointBase
+enum Keel.Endpoints.RequestBinding
+enum Keel.Endpoints.StreamFormat
+protected Keel.Endpoints.Endpoint<TRequest, TResponse>()
+protected Keel.Endpoints.Endpoint<TRequest>()
+protected Keel.Endpoints.EndpointGroup()
+protected Keel.Endpoints.EndpointRouteAttribute(string method, string template)
+protected Keel.Endpoints.EndpointWithoutRequest<TResponse>()
+protected Keel.Endpoints.ResultEndpoint<TRequest, TResult>()
+protected Keel.Endpoints.StreamEndpoint<TRequest, TItem>()
+public Keel.Endpoints.BindRequestAttribute(Keel.Endpoints.RequestBinding binding)
+public Keel.Endpoints.DeleteAttribute(string template)
+public Keel.Endpoints.EndpointOptions Keel.Endpoints.EndpointOptions.AllowAnonymous()
+public Keel.Endpoints.EndpointOptions Keel.Endpoints.EndpointOptions.Convention(System.Action<Microsoft.AspNetCore.Builder.RouteHandlerBuilder> convention)
+public Keel.Endpoints.EndpointOptions Keel.Endpoints.EndpointOptions.RequireAuthorization(Microsoft.AspNetCore.Authorization.AuthorizationPolicy policy)
+public Keel.Endpoints.EndpointOptions Keel.Endpoints.EndpointOptions.RequireAuthorization(params string[] policies)
+public Keel.Endpoints.EndpointOptions Keel.Endpoints.EndpointOptions.Summary(string summary)
+public Keel.Endpoints.EndpointOptions Keel.Endpoints.EndpointOptions.Tags(params string[] tags)
+public Keel.Endpoints.EndpointOptions()
+public Keel.Endpoints.GetAttribute(string template)
+public Keel.Endpoints.KeelEndpointMetadata(System.Type EndpointType)
+public Keel.Endpoints.KeelOptions()
+public Keel.Endpoints.PatchAttribute(string template)
+public Keel.Endpoints.PostAttribute(string template)
+public Keel.Endpoints.PutAttribute(string template)
+public Keel.Endpoints.RequestBinding Keel.Endpoints.BindRequestAttribute.Binding { get; }
+public Keel.Endpoints.RequestBinding? Keel.Endpoints.EndpointOptions.Binding { get; set; }
+public Keel.Endpoints.ServerSentEventsAttribute(string? eventType = null)
+public Keel.Endpoints.StreamFormat Keel.Endpoints.EndpointOptions.StreamFormat { get; set; }
+public System.Type Keel.Endpoints.KeelEndpointMetadata.EndpointType { get; init; }
+public abstract System.Collections.Generic.IAsyncEnumerable<TItem> Keel.Endpoints.StreamEndpoint<TRequest, TItem>.HandleAsync(TRequest request, System.Threading.CancellationToken cancellationToken)
+public abstract System.Threading.Tasks.Task Keel.Endpoints.Endpoint<TRequest>.HandleAsync(TRequest request, System.Threading.CancellationToken cancellationToken)
+public abstract System.Threading.Tasks.Task<TResponse> Keel.Endpoints.Endpoint<TRequest, TResponse>.HandleAsync(TRequest request, System.Threading.CancellationToken cancellationToken)
+public abstract System.Threading.Tasks.Task<TResponse> Keel.Endpoints.EndpointWithoutRequest<TResponse>.HandleAsync(System.Threading.CancellationToken cancellationToken)
+public abstract System.Threading.Tasks.Task<TResult> Keel.Endpoints.ResultEndpoint<TRequest, TResult>.HandleAsync(TRequest request, System.Threading.CancellationToken cancellationToken)
+public abstract void Keel.Endpoints.EndpointGroup.Configure(Keel.Endpoints.EndpointOptions options)
+public bool Keel.Endpoints.KeelEndpointMetadata.Equals(Keel.Endpoints.KeelEndpointMetadata? other)
+public bool Keel.Endpoints.KeelOptions.RequireExplicitAuthorization { get; set; }
+public bool Keel.Endpoints.KeelOptions.TagFromNamespace { get; set; }
+public override bool Keel.Endpoints.KeelEndpointMetadata.Equals(object? obj)
+public override int Keel.Endpoints.KeelEndpointMetadata.GetHashCode()
+public override string Keel.Endpoints.KeelEndpointMetadata.ToString()
+public static Microsoft.AspNetCore.Builder.RouteHandlerBuilder Keel.Endpoints.Infrastructure.GeneratedEndpoints.Apply<TEndpoint>(Microsoft.AspNetCore.Builder.RouteHandlerBuilder builder, Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, System.Type? requestType, Keel.Endpoints.RequestBinding? generatedBinding, bool generatedServerSentEvents, Keel.Endpoints.EndpointGroup[] groups) where TEndpoint : Keel.Endpoints.EndpointBase
+public static Microsoft.AspNetCore.Builder.RouteHandlerBuilder Keel.Endpoints.KeelEndpointsExtensions.MapEndpoint(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, System.Type endpointType)
+public static Microsoft.AspNetCore.Builder.RouteHandlerBuilder Keel.Endpoints.KeelEndpointsExtensions.MapEndpoint<TEndpoint>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app) where TEndpoint : Keel.Endpoints.EndpointBase
+public static Microsoft.AspNetCore.Routing.RouteGroupBuilder Keel.Endpoints.KeelEndpointsExtensions.MapKeelEndpoints(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, System.Reflection.Assembly assembly, string prefix = "")
+public static Microsoft.Extensions.DependencyInjection.IServiceCollection Keel.Endpoints.KeelEndpointsExtensions.AddKeelEndpoints(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<Keel.Endpoints.KeelOptions>? configure = null)
+public static TEndpoint Keel.Endpoints.Infrastructure.GeneratedEndpoints.Activate<TEndpoint>(System.IServiceProvider requestServices) where TEndpoint : Keel.Endpoints.EndpointBase
+public static bool Keel.Endpoints.KeelEndpointMetadata.op_Equality(Keel.Endpoints.KeelEndpointMetadata? left, Keel.Endpoints.KeelEndpointMetadata? right)
+public static bool Keel.Endpoints.KeelEndpointMetadata.op_Inequality(Keel.Endpoints.KeelEndpointMetadata? left, Keel.Endpoints.KeelEndpointMetadata? right)
+public static string? Keel.Endpoints.Infrastructure.GeneratedEndpoints.EventType<TEndpoint>() where TEndpoint : Keel.Endpoints.EndpointBase
+public string Keel.Endpoints.EndpointRouteAttribute.Method { get; }
+public string Keel.Endpoints.EndpointRouteAttribute.Template { get; }
+public string? Keel.Endpoints.EndpointOptions.EventType { get; set; }
+public string? Keel.Endpoints.ServerSentEventsAttribute.EventType { get; }
+public virtual void Keel.Endpoints.EndpointBase.Configure(Keel.Endpoints.EndpointOptions options)
+public void Keel.Endpoints.KeelEndpointMetadata.Deconstruct(out System.Type EndpointType)
+sealed class Keel.Endpoints.BindRequestAttribute : System.Attribute
+sealed class Keel.Endpoints.DeleteAttribute : Keel.Endpoints.EndpointRouteAttribute
+sealed class Keel.Endpoints.EndpointOptions
+sealed class Keel.Endpoints.GetAttribute : Keel.Endpoints.EndpointRouteAttribute
+sealed class Keel.Endpoints.KeelEndpointMetadata : System.IEquatable<Keel.Endpoints.KeelEndpointMetadata>
+sealed class Keel.Endpoints.KeelOptions
+sealed class Keel.Endpoints.PatchAttribute : Keel.Endpoints.EndpointRouteAttribute
+sealed class Keel.Endpoints.PostAttribute : Keel.Endpoints.EndpointRouteAttribute
+sealed class Keel.Endpoints.PutAttribute : Keel.Endpoints.EndpointRouteAttribute
+sealed class Keel.Endpoints.ServerSentEventsAttribute : System.Attribute
+static class Keel.Endpoints.KeelEndpointsExtensions

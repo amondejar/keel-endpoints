@@ -3,7 +3,8 @@
 **One class per endpoint for ASP.NET Core Minimal APIs.** Binding, validation and OpenAPI stay
 native; authorization is fail-closed; analyzers catch route mistakes at build time.
 
-> **Status: 0.4 preview.** The API may change before 1.0. See the [roadmap](#roadmap).
+> **Status: 1.0 preview.** The public API is frozen for the 1.0 previews ([compatibility](docs/compatibility.md)).
+> **[Documentation](docs/README.md)**
 
 ```csharp
 namespace Billing.Invoices.Get;
@@ -261,7 +262,7 @@ See [its README](src/Keel.Endpoints.FluentValidation/README.md).
 - **0.2** Native AOT: generated registration (done, `0.2.0-preview`).
 - **0.3** Group configuration per folder, `dotnet new` templates, code fixes (done, `0.3.0-preview`).
 - **0.4** A route and contract manifest with breaking-change checks in CI (done, `0.4.0-preview`).
-- **1.0** Public API frozen for two previews, full docs, benchmark within 5% of a hand-written Minimal API.
+- **1.0** Public API frozen for two previews ([PublicAPI.txt](src/Keel.Endpoints/PublicAPI.txt)), [full docs](docs/README.md), [benchmark](benchmarks/Keel.Endpoints.Benchmarks) within 5% of a hand-written Minimal API (in progress, `1.0.0-preview`).
 
 ## Building
 

@@ -1,0 +1,3 @@
+public static Microsoft.Extensions.DependencyInjection.IServiceCollection Keel.Endpoints.FluentValidation.KeelFluentValidationExtensions.AddKeelFluentValidation(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Reflection.Assembly assembly, Microsoft.Extensions.DependencyInjection.ServiceLifetime lifetime = 1)
+public static TBuilder Keel.Endpoints.FluentValidation.KeelFluentValidationExtensions.WithFluentValidation<TBuilder>(this TBuilder builder) where TBuilder : Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+static class Keel.Endpoints.FluentValidation.KeelFluentValidationExtensions

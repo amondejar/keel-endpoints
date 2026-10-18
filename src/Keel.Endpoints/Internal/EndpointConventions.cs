@@ -19,7 +19,7 @@ internal static class EndpointConventions
         Type endpointType,
         EndpointRouteAttribute route,
         EndpointOptions options,
-        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type? requestType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicConstructors)] Type? requestType,
         IReadOnlyList<EndpointGroup> groups)
     {
         builder
@@ -39,7 +39,16 @@ internal static class EndpointConventions
 
         // OpenAPI: document the 400 that .NET 10 validation can return for this contract.
         if (OpenApiConventions.UsesNativeValidation(app.ServiceProvider, requestType))
+        {
             builder.ProducesValidationProblem();
+        }
+        else if (requestType is not null)
+        {
+            // Nothing in the contract to validate: without this, AddValidation() still wraps the endpoint in its
+            // filter (a contract bound with [AsParameters] looks validatable to it), which costs every request
+            // about 900 bytes and as much time as the rest of the endpoint (see benchmarks/).
+            builder.DisableValidation();
+        }
 
         // OpenAPI: tag from the namespace unless a tag was declared anywhere (class, Configure, group).
         if (keelOptions.TagFromNamespace && OpenApiConventions.DefaultTag(endpointType) is { } tag)

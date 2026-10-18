@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    Compares Keel endpoints with the same operations written as plain Minimal API lambdas, in process:
+    each request delegate is invoked directly, so the numbers are the framework's own cost (binding,
+    validation, handler, serialization), not the network's. See README.md.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <NoWarn>$(NoWarn);ASP0029</NoWarn>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <TieredPGO>true</TieredPGO>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Keel.Endpoints\Keel.Endpoints.csproj" />
+    <ProjectReference Include="..\..\src\Keel.Endpoints.Analyzers\Keel.Endpoints.Analyzers.csproj"
+                      OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+</Project>

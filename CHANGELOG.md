@@ -3,7 +3,28 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [0.4.0-preview.1] - Unreleased
+## [1.0.0-preview.1] - Unreleased
+
+The first 1.0 preview: the public API is frozen (see `docs/compatibility.md`).
+
+### Added
+- `PublicAPI.txt` for each package, checked by the test suite: any public API change fails until the
+  file is updated (`KEEL_UPDATE_PUBLIC_API=1`).
+- `benchmarks/Keel.Endpoints.Benchmarks`: Keel endpoints against the same operations as Minimal API
+  lambdas, in process; `--check 5` fails when Keel is more than 5% slower. A CI job keeps it running.
+- Documentation under `docs/`: getting started, endpoints, authorization, validation, OpenAPI, Native AOT,
+  testing and compatibility.
+
+### Changed
+- Endpoints whose contract has nothing to validate opt out of the .NET 10 validation filter
+  (`DisableValidation()`). It ran on every such request (any `[AsParameters]` contract looked validatable
+  to it), costing about 900 bytes and up to half the request time.
+- Generated and reflective handlers take the request's `IServiceProvider` instead of `HttpContext`, which
+  saves about 200 bytes per request when an endpoint filter runs.
+- `GeneratedEndpoints.Activate<T>` takes the request's `IServiceProvider` (generated code only).
+- A contract known to the validation resolvers but without any rule no longer documents a `400`.
+
+## [0.4.0-preview.1] - 2026-10-18
 
 ### Added
 - **API manifest** (`Keel.Endpoints.Testing`): `ApiManifest.Create` describes every endpoint from
@@ -17,7 +38,7 @@ and the project uses [Semantic Versioning](https://semver.org/).
 - `AddKeelEndpoints()` registers ApiExplorer (`AddEndpointsApiExplorer()`), which the manifest and the
   OpenAPI document read.
 
- - 2026-10-18
+## [0.3.0-preview.1] - 2026-10-18
 
 ### Added
 - **Endpoint groups.** An `EndpointGroup` subclass configures every endpoint in its namespace and below
