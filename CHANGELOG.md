@@ -3,6 +3,19 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-preview.2] - 2026-10-19
+
+No public API changes since 1.0.0-preview.1.
+
+### Added
+- Package icon, README badges, `SECURITY.md`, `CODE_OF_CONDUCT.md`, issue and pull request templates.
+- Releases create a GitHub release with the version's changelog section and the packages attached.
+- CI builds are deterministic (`ContinuousIntegrationBuild`), so the published packages are reproducible.
+
+### Fixed
+- The benchmark no longer starts a server, so an IDE launch profile with an https:// URL does not break it.
+
+
 ## [1.0.0-preview.1] - Unreleased
 
 The first 1.0 preview: the public API is frozen (see `docs/compatibility.md`).
