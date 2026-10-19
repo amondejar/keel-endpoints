@@ -47,4 +47,4 @@ Maintainers tag `vX.Y.Z[-preview.N]`; the release workflow packs and pushes to n
 
 ## Code of conduct
 
-This project follows the [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
+This project follows the Contributor Covenant 2.1: see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Security issues: [SECURITY.md](SECURITY.md).

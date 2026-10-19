@@ -1,0 +1,41 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Keel.Endpoints version
+      placeholder: 1.0.0-preview.1
+    validations:
+      required: true
+  - type: dropdown
+    id: registration
+    attributes:
+      label: Registration
+      options:
+        - Generated MapKeelEndpoints(prefix)
+        - Generated, with Native AOT (PublishAot)
+        - Reflective MapKeelEndpoints(assembly, prefix)
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Smallest code that shows it
+      description: The endpoint class, its contract and the registration. A link to a repository works too.
+      render: csharp
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened
+      description: Include the HTTP status, the response body or the full exception.
+    validations:
+      required: true
+  - type: input
+    id: dotnet
+    attributes:
+      label: .NET SDK and OS
+      placeholder: 10.0.100, Windows 11

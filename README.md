@@ -1,4 +1,11 @@
+<img src="assets/icon.png" alt="" width="64" align="right">
+
 # Keel.Endpoints
+
+[![CI](https://github.com/OWNER/keel-endpoints/actions/workflows/ci.yml/badge.svg)](https://github.com/amondejar/keel-endpoints/actions/workflows/ci.yml)
+[![NuGet](https://img.shields.io/nuget/vpre/Keel.Endpoints.svg?label=Keel.Endpoints)](https://www.nuget.org/packages/Keel.Endpoints)
+[![Downloads](https://img.shields.io/nuget/dt/Keel.Endpoints.svg)](https://www.nuget.org/packages/Keel.Endpoints)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **One class per endpoint for ASP.NET Core Minimal APIs.** Binding, validation and OpenAPI stay
 native; authorization is fail-closed; analyzers catch route mistakes at build time.

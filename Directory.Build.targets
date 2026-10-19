@@ -6,4 +6,17 @@
   <PropertyGroup Condition="'$(KeelOfflineRoslyn)' == 'true'">
     <KeelRoslynDir>$(NetCoreRoot)sdk/$(NETCoreSdkVersion)/DotnetTools/dotnet-format/</KeelRoslynDir>
   </PropertyGroup>
+
+  <!-- Builds on GitHub Actions are deterministic, so the packages on nuget.org are reproducible. -->
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!-- Every package carries the project icon. -->
+  <PropertyGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <None Include="$(MSBuildThisFileDirectory)assets/icon.png" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
 </Project>

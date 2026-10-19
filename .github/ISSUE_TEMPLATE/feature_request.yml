@@ -1,0 +1,22 @@
+name: Feature request
+description: Something Keel.Endpoints could do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+      description: Code you would like to write is the best description.
+      render: csharp
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do instead today
+      description: Can a plain ASP.NET Core convention (options.Convention(...)) already do it?

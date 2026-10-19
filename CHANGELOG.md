@@ -14,6 +14,9 @@ The first 1.0 preview: the public API is frozen (see `docs/compatibility.md`).
   lambdas, in process; `--check 5` fails when Keel is more than 5% slower. A CI job keeps it running.
 - Documentation under `docs/`: getting started, endpoints, authorization, validation, OpenAPI, Native AOT,
   testing and compatibility.
+- Package icon, README badges, `SECURITY.md`, `CODE_OF_CONDUCT.md`, issue and pull request templates.
+- Releases create a GitHub release with the version's changelog section and the packages attached.
+- CI builds are deterministic (`ContinuousIntegrationBuild`), so the published packages are reproducible.
 
 ### Changed
 - Endpoints whose contract has nothing to validate opt out of the .NET 10 validation filter
