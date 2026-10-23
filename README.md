@@ -255,6 +255,17 @@ Accept intended changes with `KEEL_UPDATE_MANIFEST=1 dotnet test` (compatible ch
 [api-diff action](actions/api-diff) comments them on every pull request. The rules are in
 [docs/api-manifest.md](docs/api-manifest.md).
 
+## Versioning
+
+`Keel.Endpoints.Versioning` puts each version in its own folder (`Features/V2/...`) on top of Asp.Versioning,
+with a unique operation name per version:
+
+```csharp
+app.NewVersionedApi().MapKeelEndpoints("/api/v{version:apiVersion}").WithKeelVersioning();
+```
+
+See [docs/versioning.md](docs/versioning.md).
+
 ## Idempotency
 
 `Keel.Endpoints.Idempotency` makes retries of `POST` and `PATCH` safe: with an `Idempotency-Key` header the

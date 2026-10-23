@@ -1,0 +1,7 @@
+public Asp.Versioning.NamespaceParser Keel.Endpoints.Versioning.KeelVersioningOptions.NamespaceParser { get; set; }
+public Keel.Endpoints.Versioning.KeelVersioningOptions()
+public bool Keel.Endpoints.Versioning.KeelVersioningOptions.VersionFromNamespace { get; set; }
+public bool Keel.Endpoints.Versioning.KeelVersioningOptions.VersionedOperationNames { get; set; }
+public static TBuilder Keel.Endpoints.Versioning.KeelVersioningExtensions.WithKeelVersioning<TBuilder>(this TBuilder builder, System.Action<Keel.Endpoints.Versioning.KeelVersioningOptions>? configure = null) where TBuilder : Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+sealed class Keel.Endpoints.Versioning.KeelVersioningOptions
+static class Keel.Endpoints.Versioning.KeelVersioningExtensions

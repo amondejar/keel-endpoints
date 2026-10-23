@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -14,7 +14,7 @@ namespace Keel.Endpoints.Analyzers;
 public sealed class EndpointAnalyzer : DiagnosticAnalyzer
 {
     private const string Category = "Keel.Endpoints";
-    private const string HelpBase = "https://github.com/TU-USUARIO/keel-endpoints/blob/main/docs/diagnostics.md#";
+    private const string HelpBase = "https://github.com/amondejar/keel-endpoints/blob/main/docs/diagnostics.md#";
 
     public static readonly DiagnosticDescriptor DuplicateRoute = new(
         "KEEL001",
@@ -76,7 +76,7 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
 
         context.RegisterCompilationStartAction(start =>
         {
-            var routes = new ConcurrentBag<(string Key, string Method, string Template, INamedTypeSymbol Type, Location Location)>();
+            var routes = new ConcurrentBag<(string Key, string Method, string Template, INamedTypeSymbol Type, Location Location, HashSet<string> Versions)>();
 
             // With the registration written to disk (Native AOT), the .NET 10 validation generator sees every
             // contract in the generated MapMethods calls, so [ValidatableType] is not needed (KEEL004 is off).
@@ -95,7 +95,7 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
                 var location = attribute.ApplicationSyntaxReference?.GetSyntax(symbolContext.CancellationToken).GetLocation()
                                ?? type.Locations.FirstOrDefault() ?? Location.None;
 
-                routes.Add((Normalize(method, template), method, template, type, location));
+                routes.Add((Normalize(method, template), method, template, type, location, ApiVersions.Of(type)));
 
                 var contract = FindContract(type);
                 if (contract is null) return;
@@ -109,9 +109,12 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
                 foreach (var group in routes.GroupBy(r => r.Key).Where(g => g.Count() > 1))
                 {
                     var ordered = group.OrderBy(r => r.Type.ToDisplayString(), StringComparer.Ordinal).ToList();
-                    var first = ordered[0];
-                    foreach (var duplicate in ordered.Skip(1))
+                    for (var i = 1; i < ordered.Count; i++)
                     {
+                        // The same route in two API versions (V1 and V2 folders, or [ApiVersion]) is not a duplicate.
+                        var duplicate = ordered[i];
+                        var first = ordered.Take(i).FirstOrDefault(r => ApiVersions.Overlap(r.Versions, duplicate.Versions));
+                        if (first.Type is null) continue;
                         end.ReportDiagnostic(Diagnostic.Create(DuplicateRoute, duplicate.Location,
                             duplicate.Type.Name, duplicate.Method, duplicate.Template, first.Type.ToDisplayString()));
                     }

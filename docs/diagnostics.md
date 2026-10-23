@@ -11,6 +11,10 @@ constraints, letter case and leading or trailing slashes are ignored, so `things
 
 **Fix:** change one template or method, or merge the endpoints.
 
+The same route in two API versions is not a duplicate: versions come from Asp.Versioning's `[ApiVersion]`,
+`[MapToApiVersion]` and `[ApiVersionNeutral]` on the class, or from a version segment of the namespace
+(`V1`, `V2_1`). See [versioning](versioning.md).
+
 ## KEEL002
 
 **Route parameter has no matching contract member.** The template declares `{tenantId}`, but the request

@@ -3,7 +3,22 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [1.0.0-preview.5] - Unreleased
+## [1.0.0-preview.6] - Unreleased
+
+No public API changes in the existing packages.
+
+### Added
+- **`Keel.Endpoints.Versioning`** (new, preview): `WithKeelVersioning()` on an Asp.Versioning versioned API
+  takes each endpoint's version from its folder (`Features/V2/...`) unless the class or a convention declares
+  one, and adds the version to the operation name of endpoints that serve one version (`OrdersGetV2`), which
+  two versions of an operation need to route at all.
+- `docs/versioning.md`.
+
+### Changed
+- KEEL001 no longer reports the same route in two API versions, by `[ApiVersion]`/`[MapToApiVersion]` on the
+  class or by a version segment in the namespace.
+
+## [1.0.0-preview.5] - 2026-10-23
 
 No public API changes in the existing packages.
 

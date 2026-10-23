@@ -49,6 +49,28 @@ internal static class AnalyzerTests
             Assert.Equal("KEEL001", string.Join(",", ids));
         });
 
+        Test("KEEL001: the same route in two API versions (folders or [ApiVersion]) is not a duplicate", async () =>
+        {
+            var ids = await DiagnosticsAsync("""
+                namespace Asp.Versioning
+                {
+                    [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = true)]
+                    public sealed class ApiVersionAttribute(double version) : System.Attribute;
+                }
+                namespace Shop.V1.Orders { public sealed record GetOrder(string Id); [Get("orders/{id}")] public sealed class Get : Endpoint<GetOrder, string> { public override Task<string> HandleAsync(GetOrder r, CancellationToken ct) => Task.FromResult(""); } }
+                namespace Shop.V2.Orders { public sealed record GetOrder(string Id); [Get("orders/{id}")] public sealed class Get : Endpoint<GetOrder, string> { public override Task<string> HandleAsync(GetOrder r, CancellationToken ct) => Task.FromResult(""); } }
+                namespace Shop.Items
+                {
+                    public sealed record GetItem(string Id);
+                    [Get("items/{id}"), Asp.Versioning.ApiVersion(1.0)] public sealed class GetV1 : Endpoint<GetItem, string> { public override Task<string> HandleAsync(GetItem r, CancellationToken ct) => Task.FromResult(""); }
+                    [Get("items/{id}"), Asp.Versioning.ApiVersion(2.0)] public sealed class GetV2 : Endpoint<GetItem, string> { public override Task<string> HandleAsync(GetItem r, CancellationToken ct) => Task.FromResult(""); }
+                    [Get("/Items/{id}/"), Asp.Versioning.ApiVersion(2.0)] public sealed class GetV2Again : Endpoint<GetItem, string> { public override Task<string> HandleAsync(GetItem r, CancellationToken ct) => Task.FromResult(""); }
+                }
+                """);
+            // Only GetV2Again collides: same route, same version as GetV2.
+            Assert.Equal("KEEL001", string.Join(",", ids));
+        });
+
         Test("KEEL002: a route parameter with no contract member", async () =>
         {
             var ids = await DiagnosticsAsync("""
