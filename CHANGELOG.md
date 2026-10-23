@@ -3,7 +3,20 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [1.0.0-preview.4] - Unreleased
+## [1.0.0-preview.5] - Unreleased
+
+No public API changes in the existing packages.
+
+### Added
+- **`Keel.Endpoints.Idempotency`** (new, preview): `options.Idempotent()` and `WithIdempotency()` make
+  `POST` and `PATCH` safe to retry with an `Idempotency-Key` header. The first response is stored in
+  `IDistributedCache` (or an `IIdempotencyStore`) and replayed with `Idempotent-Replayed: true`; a reused key
+  with another request gets 422, a retry while the first runs gets 409. Keys are per endpoint and per user.
+  AOT-compatible.
+- The Native AOT sample makes `POST todos` idempotent, and the AOT smoke test checks a retry.
+- `docs/idempotency.md`.
+
+## [1.0.0-preview.4] - 2026-10-23
 
 No public API changes in the library packages.
 

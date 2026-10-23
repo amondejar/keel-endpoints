@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using Keel.Endpoints;
+using Keel.Endpoints.Idempotency;
 using Keel.Endpoints.Telemetry;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -12,7 +13,8 @@ builder.Services.AddKeelEndpoints();
 builder.Services.AddValidation();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<TodoStore>();
-builder.Services.AddKeelTelemetry();   // keel.operation / keel.feature on request spans and metrics, AOT-safe
+builder.Services.AddKeelTelemetry();
+builder.Services.AddKeelIdempotency();   // Idempotency-Key on POST todos   // keel.operation / keel.feature on request spans and metrics, AOT-safe
 // Native AOT has no reflection-based JSON: every type on the wire is listed in the context below.
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonContext.Default));
 
@@ -75,6 +77,9 @@ namespace Todos.Create
     [Post("todos")]
     public sealed class Endpoint(TodoStore store) : Endpoint<CreateTodo, Todo>
     {
+        // A retry with the same Idempotency-Key gets the first todo back instead of creating a second one.
+        public override void Configure(EndpointOptions options) => options.Idempotent();
+
         public override Task<Todo> HandleAsync(CreateTodo request, CancellationToken ct) => Task.FromResult(store.Add(request.Title));
     }
 }

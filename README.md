@@ -255,6 +255,18 @@ Accept intended changes with `KEEL_UPDATE_MANIFEST=1 dotnet test` (compatible ch
 [api-diff action](actions/api-diff) comments them on every pull request. The rules are in
 [docs/api-manifest.md](docs/api-manifest.md).
 
+## Idempotency
+
+`Keel.Endpoints.Idempotency` makes retries of `POST` and `PATCH` safe: with an `Idempotency-Key` header the
+first response is stored and retries get it back without running the handler again.
+
+```csharp
+builder.Services.AddKeelIdempotency();
+public override void Configure(EndpointOptions options) => options.Idempotent();
+```
+
+See [docs/idempotency.md](docs/idempotency.md).
+
 ## Observability
 
 `Keel.Endpoints.OpenTelemetry` tags ASP.NET Core's request spans and `http.server.request.duration` with

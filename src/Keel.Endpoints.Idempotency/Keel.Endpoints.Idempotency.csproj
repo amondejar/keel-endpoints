@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <PackageId>Keel.Endpoints.Idempotency</PackageId>
+    <Description>Safe retries for POST and PATCH in Keel.Endpoints and any Minimal API: with an Idempotency-Key header, the first response is stored and retries get it back without running the handler again. Per-user keys, 422 on a reused key with another request, 409 while the first is still running. Stores in IDistributedCache (memory or Redis) or your own IIdempotencyStore.</Description>
+    <PackageTags>$(PackageTags);idempotency;idempotency-key;retries</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Keel.Endpoints\Keel.Endpoints.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <InternalsVisibleTo Include="Keel.Endpoints.Tests" />
+  </ItemGroup>
+
+</Project>

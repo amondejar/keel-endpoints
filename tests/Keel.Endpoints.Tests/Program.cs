@@ -6,6 +6,7 @@ AuthorizationTests.Register();
 FluentValidationTests.Register();
 GroupTests.Register();
 TelemetryTests.Register();
+IdempotencyTests.Register();
 OpenApiTests.Register();
 #if KEEL_OPENAPI
 OpenApiDocumentTests.Register();

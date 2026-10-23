@@ -102,7 +102,7 @@ internal static class TelemetryTests
         }
 
         builder.Services.AddKeelEndpoints();
-        builder.Services.AddValidation();
+        builder.Services.AddTestValidation();
         builder.Services.AddProblemDetails();
         builder.Services.AddKeelTelemetry();
         builder.Services.AddSingleton<OrderBook>();

@@ -21,6 +21,9 @@ the registration is ordinary source and the attribute is not needed.
 **Endpoints with nothing to validate** are excluded from the validation filter (`DisableValidation()`), so
 they do not pay for it on every request.
 
+Call `AddValidation()` once per project: the .NET 10 validation generator fails the build (CS8785, "hintName
+must be unique") when a project has two call sites.
+
 ## FluentValidation
 
 ```bash

@@ -1,0 +1,51 @@
+Keel.Endpoints.Idempotency.IdempotencyClaimStatus.Claimed
+Keel.Endpoints.Idempotency.IdempotencyClaimStatus.Completed
+Keel.Endpoints.Idempotency.IdempotencyClaimStatus.InFlight
+enum Keel.Endpoints.Idempotency.IdempotencyClaimStatus
+interface Keel.Endpoints.Idempotency.IIdempotencyStore
+public Keel.Endpoints.Idempotency.IdempotencyClaim(Keel.Endpoints.Idempotency.IdempotencyClaimStatus Status, Keel.Endpoints.Idempotency.IdempotentResponse? Response = null)
+public Keel.Endpoints.Idempotency.IdempotencyClaimStatus Keel.Endpoints.Idempotency.IdempotencyClaim.Status { get; init; }
+public Keel.Endpoints.Idempotency.IdempotencyEndpointOptions Keel.Endpoints.Idempotency.IdempotencyMetadata.Options { get; init; }
+public Keel.Endpoints.Idempotency.IdempotencyEndpointOptions()
+public Keel.Endpoints.Idempotency.IdempotencyMetadata(Keel.Endpoints.Idempotency.IdempotencyEndpointOptions Options)
+public Keel.Endpoints.Idempotency.IdempotentResponse()
+public Keel.Endpoints.Idempotency.IdempotentResponse? Keel.Endpoints.Idempotency.IdempotencyClaim.Response { get; init; }
+public Keel.Endpoints.Idempotency.KeelIdempotencyOptions()
+public System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, string>> Keel.Endpoints.Idempotency.IdempotentResponse.Headers { get; init; }
+public System.ReadOnlyMemory<byte> Keel.Endpoints.Idempotency.IdempotentResponse.Body { get; init; }
+public System.TimeSpan Keel.Endpoints.Idempotency.KeelIdempotencyOptions.InFlightTimeout { get; set; }
+public System.TimeSpan Keel.Endpoints.Idempotency.KeelIdempotencyOptions.Retention { get; set; }
+public System.TimeSpan? Keel.Endpoints.Idempotency.IdempotencyEndpointOptions.Retention { get; set; }
+public abstract System.Threading.Tasks.ValueTask Keel.Endpoints.Idempotency.IIdempotencyStore.CompleteAsync(string key, Keel.Endpoints.Idempotency.IdempotentResponse response, System.TimeSpan retention, System.Threading.CancellationToken cancellationToken)
+public abstract System.Threading.Tasks.ValueTask Keel.Endpoints.Idempotency.IIdempotencyStore.ReleaseAsync(string key, System.Threading.CancellationToken cancellationToken)
+public abstract System.Threading.Tasks.ValueTask<Keel.Endpoints.Idempotency.IdempotencyClaim> Keel.Endpoints.Idempotency.IIdempotencyStore.TryClaimAsync(string key, System.TimeSpan inFlightTimeout, System.Threading.CancellationToken cancellationToken)
+public bool Keel.Endpoints.Idempotency.IdempotencyClaim.Equals(Keel.Endpoints.Idempotency.IdempotencyClaim? other)
+public bool Keel.Endpoints.Idempotency.IdempotencyEndpointOptions.RequireKey { get; set; }
+public bool Keel.Endpoints.Idempotency.IdempotencyMetadata.Equals(Keel.Endpoints.Idempotency.IdempotencyMetadata? other)
+public int Keel.Endpoints.Idempotency.KeelIdempotencyOptions.MaxKeyLength { get; set; }
+public int Keel.Endpoints.Idempotency.KeelIdempotencyOptions.MaxResponseSize { get; set; }
+public override bool Keel.Endpoints.Idempotency.IdempotencyClaim.Equals(object? obj)
+public override bool Keel.Endpoints.Idempotency.IdempotencyMetadata.Equals(object? obj)
+public override int Keel.Endpoints.Idempotency.IdempotencyClaim.GetHashCode()
+public override int Keel.Endpoints.Idempotency.IdempotencyMetadata.GetHashCode()
+public override string Keel.Endpoints.Idempotency.IdempotencyClaim.ToString()
+public override string Keel.Endpoints.Idempotency.IdempotencyMetadata.ToString()
+public required int Keel.Endpoints.Idempotency.IdempotentResponse.StatusCode { get; init; }
+public required string Keel.Endpoints.Idempotency.IdempotentResponse.Fingerprint { get; init; }
+public static Keel.Endpoints.EndpointOptions Keel.Endpoints.IdempotencyEndpointOptionsExtensions.Idempotent(this Keel.Endpoints.EndpointOptions options, System.Action<Keel.Endpoints.Idempotency.IdempotencyEndpointOptions>? configure = null)
+public static Microsoft.Extensions.DependencyInjection.IServiceCollection Keel.Endpoints.Idempotency.KeelIdempotencyExtensions.AddKeelIdempotency(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<Keel.Endpoints.Idempotency.KeelIdempotencyOptions>? configure = null)
+public static TBuilder Keel.Endpoints.Idempotency.KeelIdempotencyExtensions.WithIdempotency<TBuilder>(this TBuilder builder, System.Action<Keel.Endpoints.Idempotency.IdempotencyEndpointOptions>? configure = null) where TBuilder : Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+public static bool Keel.Endpoints.Idempotency.IdempotencyClaim.op_Equality(Keel.Endpoints.Idempotency.IdempotencyClaim? left, Keel.Endpoints.Idempotency.IdempotencyClaim? right)
+public static bool Keel.Endpoints.Idempotency.IdempotencyClaim.op_Inequality(Keel.Endpoints.Idempotency.IdempotencyClaim? left, Keel.Endpoints.Idempotency.IdempotencyClaim? right)
+public static bool Keel.Endpoints.Idempotency.IdempotencyMetadata.op_Equality(Keel.Endpoints.Idempotency.IdempotencyMetadata? left, Keel.Endpoints.Idempotency.IdempotencyMetadata? right)
+public static bool Keel.Endpoints.Idempotency.IdempotencyMetadata.op_Inequality(Keel.Endpoints.Idempotency.IdempotencyMetadata? left, Keel.Endpoints.Idempotency.IdempotencyMetadata? right)
+public string Keel.Endpoints.Idempotency.KeelIdempotencyOptions.HeaderName { get; set; }
+public void Keel.Endpoints.Idempotency.IdempotencyClaim.Deconstruct(out Keel.Endpoints.Idempotency.IdempotencyClaimStatus Status, out Keel.Endpoints.Idempotency.IdempotentResponse? Response)
+public void Keel.Endpoints.Idempotency.IdempotencyMetadata.Deconstruct(out Keel.Endpoints.Idempotency.IdempotencyEndpointOptions Options)
+sealed class Keel.Endpoints.Idempotency.IdempotencyClaim : System.IEquatable<Keel.Endpoints.Idempotency.IdempotencyClaim>
+sealed class Keel.Endpoints.Idempotency.IdempotencyEndpointOptions
+sealed class Keel.Endpoints.Idempotency.IdempotencyMetadata : System.IEquatable<Keel.Endpoints.Idempotency.IdempotencyMetadata>
+sealed class Keel.Endpoints.Idempotency.IdempotentResponse
+sealed class Keel.Endpoints.Idempotency.KeelIdempotencyOptions
+static class Keel.Endpoints.Idempotency.KeelIdempotencyExtensions
+static class Keel.Endpoints.IdempotencyEndpointOptionsExtensions
