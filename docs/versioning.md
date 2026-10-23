@@ -9,7 +9,11 @@ dotnet add package Asp.Versioning.Mvc.ApiExplorer   # optional: one OpenAPI docu
 ```
 
 ```csharp
-builder.Services.AddApiVersioning(o => o.ReportApiVersions = true)
+builder.Services.AddApiVersioning(o =>
+    {
+        o.ReportApiVersions = true;
+        o.ApiVersionReader = new UrlSegmentApiVersionReader();   // the version is in the URL (AV0015)
+    })
     .AddApiExplorer(o => { o.GroupNameFormat = "'v'V"; o.SubstituteApiVersionInUrl = true; });
 
 app.NewVersionedApi()

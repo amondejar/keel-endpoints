@@ -5,7 +5,11 @@ API versioning for [Keel.Endpoints](https://www.nuget.org/packages/Keel.Endpoint
 repeat on each endpoint.
 
 ```csharp
-builder.Services.AddApiVersioning(o => o.ReportApiVersions = true)
+builder.Services.AddApiVersioning(o =>
+    {
+        o.ReportApiVersions = true;
+        o.ApiVersionReader = new UrlSegmentApiVersionReader();   // the version is in the URL (AV0015)
+    })
     .AddApiExplorer(o => { o.GroupNameFormat = "'v'V"; o.SubstituteApiVersionInUrl = true; });
 
 app.NewVersionedApi()
