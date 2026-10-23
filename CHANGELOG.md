@@ -3,7 +3,19 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [1.0.0-preview.3] - Unreleased
+## [1.0.0-preview.4] - Unreleased
+
+No public API changes in the library packages.
+
+### Added
+- **`Keel.Endpoints.Tool`** (new, preview): `dotnet keel diff <base> [<head>]` compares `api.manifest.json`
+  between two git refs or two files and lists breaking, security and compatible changes as text, Markdown or
+  JSON; `--fail-on breaking|security|any` sets the exit code.
+- **`actions/api-diff`**: a GitHub Action that keeps one pull request comment up to date with the API
+  changes, writes them to the job summary and can fail the check. This repository's CI runs it.
+- GitHub release notes include the API changes since the previous release.
+
+## [1.0.0-preview.3] - 2026-10-23
 
 No public API changes in the existing packages since 1.0.0-preview.1.
 

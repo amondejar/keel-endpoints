@@ -10,7 +10,7 @@
 | [Native AOT](native-aot.md) | The generated registration, the two-step build, JSON contexts, limits |
 | [Observability](observability.md) | Operation and feature on traces and metrics, validation errors per field, handler timing |
 | [Testing](testing.md) | Typed calls with `EndpointClient`, the API manifest, the public API files |
-| [API manifest](api-manifest.md) | `api.manifest.json` and what counts as a breaking change |
+| [API manifest](api-manifest.md) | `api.manifest.json`, what counts as a breaking change, `dotnet keel diff` and the pull request action |
 | [Diagnostics](diagnostics.md) | KEEL001 to KEEL006 and their code fixes |
 | [Compatibility](compatibility.md) | Versioning, what 1.0 freezes, and what it does not |
 | [Trying it locally](testing-locally.md) | Building the repository, the samples and the smoke tests |

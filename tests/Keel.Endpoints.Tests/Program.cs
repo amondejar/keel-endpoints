@@ -14,5 +14,6 @@ AnalyzerTests.Register();
 GeneratorTests.Register();
 CodeFixTests.Register();
 ManifestTests.Register();
+ToolTests.Register();
 PublicApiTests.Register();
 return await Harness.RunAsync();

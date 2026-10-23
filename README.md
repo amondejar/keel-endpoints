@@ -1,4 +1,4 @@
-﻿<img src="assets/icon.png" alt="" width="64" align="right">
+<img src="assets/icon.png" alt="" width="64" align="right">
 
 # Keel.Endpoints
 
@@ -249,7 +249,10 @@ compatible GET api/invoices: response 200[].currency added
 ```
 
 Accept intended changes with `KEEL_UPDATE_MANIFEST=1 dotnet test` (compatible changes only) or
-`KEEL_UPDATE_MANIFEST=all`, then commit the file. CI never sets it. The rules are in
+`KEEL_UPDATE_MANIFEST=all`, then commit the file. CI never sets it.
+
+`dotnet keel diff v1.0.0` (`Keel.Endpoints.Tool`) lists the API changes between two versions, and the
+[api-diff action](actions/api-diff) comments them on every pull request. The rules are in
 [docs/api-manifest.md](docs/api-manifest.md).
 
 ## Observability

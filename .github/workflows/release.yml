@@ -16,6 +16,8 @@ jobs:
       contents: write   # creates the GitHub release
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # tags and history, for the API changes since the previous release
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
@@ -46,6 +48,11 @@ jobs:
             found { print }
           ' CHANGELOG.md > release-notes.md
           [ -s release-notes.md ] || echo "See CHANGELOG.md." > release-notes.md
+          previous=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          if [ -n "$previous" ]; then
+            printf '\n' >> release-notes.md
+            dotnet run -c Release --no-build --project src/Keel.Endpoints.Tool -- diff "$previous" "$GITHUB_REF_NAME" --format markdown >> release-notes.md || true
+          fi
           prerelease=""
           case "$VERSION" in *-*) prerelease="--prerelease" ;; esac
           gh release create "$GITHUB_REF_NAME" artifacts/*.nupkg --title "$VERSION" --notes-file release-notes.md $prerelease

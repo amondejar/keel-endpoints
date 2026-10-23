@@ -8,6 +8,7 @@ Keel.Endpoints follows [Semantic Versioning](https://semver.org/). From 1.0:
 | Behavior of a mapped endpoint (route, binding, responses, metadata) | Unchanged, except bug fixes called out in the changelog |
 | Analyzer IDs (KEEL001...) | Never reused; a rule may get more precise, not noisier |
 | `api.manifest.json` format | Read by every later version; a new format gets a new `format` number |
+| `dotnet keel` command line | Commands and options are not removed; the JSON report's fields stay |
 | Templates | May change at any time: they only affect new code |
 
 ## Not covered

@@ -1,0 +1,108 @@
+name: Keel.Endpoints API diff
+description: >-
+  Compares api.manifest.json between the pull request's base and head with dotnet keel diff, keeps one
+  pull request comment up to date with the API changes, and can fail the check on breaking changes.
+branding:
+  icon: git-pull-request
+  color: blue
+
+inputs:
+  fail-on:
+    description: Fail the step on breaking, security (breaking or security), any, or none.
+    default: none
+  manifest:
+    description: Manifest paths to compare, one per line. Default every *api.manifest.json in the repository.
+    default: ''
+  base:
+    description: The git ref to compare against. Default the pull request's base commit.
+    default: ''
+  comment:
+    description: Post or update a pull request comment with the report (needs pull-requests write permission).
+    default: 'true'
+  version:
+    description: Keel.Endpoints.Tool version. Default the latest, previews included.
+    default: ''
+  tool-command:
+    description: Run this instead of installing the tool (used by the Keel.Endpoints repository itself).
+    default: ''
+
+outputs:
+  breaking:
+    description: Number of breaking changes.
+    value: ${{ steps.diff.outputs.breaking }}
+  report:
+    description: Path of the Markdown report.
+    value: ${{ steps.diff.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install dotnet-keel
+      if: inputs.tool-command == ''
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+      run: |
+        if [ -n "$VERSION" ]; then
+          dotnet tool install --global Keel.Endpoints.Tool --version "$VERSION"
+        else
+          dotnet tool install --global Keel.Endpoints.Tool --prerelease
+        fi
+
+    - name: Compare manifests
+      id: diff
+      shell: bash
+      env:
+        BASE: ${{ inputs.base || github.event.pull_request.base.sha }}
+        MANIFESTS: ${{ inputs.manifest }}
+        FAIL_ON: ${{ inputs.fail-on }}
+        TOOL: ${{ inputs.tool-command || 'dotnet-keel' }}
+      run: |
+        if [ -z "$BASE" ]; then
+          echo "::error::No base ref: run on pull_request, or set the base input."
+          exit 2
+        fi
+        # actions/checkout fetches one commit by default; get the base one too.
+        git cat-file -e "$BASE^{commit}" 2>/dev/null || git fetch --no-tags --depth=1 origin "$BASE"
+
+        args=(diff "$BASE" HEAD)
+        while IFS= read -r m; do [ -n "$m" ] && args+=(--manifest "$m"); done <<< "$MANIFESTS"
+
+        report="$RUNNER_TEMP/keel-api-diff.md"
+        $TOOL "${args[@]}" --format markdown --output "$report"
+        $TOOL "${args[@]}" --format json --output "$RUNNER_TEMP/keel-api-diff.json"
+        breaking=$(grep -o '"breaking": [0-9]*' "$RUNNER_TEMP/keel-api-diff.json" | awk '{ s += $2 } END { print s + 0 }')
+
+        echo "report=$report" >> "$GITHUB_OUTPUT"
+        echo "breaking=$breaking" >> "$GITHUB_OUTPUT"
+        cat "$report" >> "$GITHUB_STEP_SUMMARY"
+
+        set +e
+        $TOOL "${args[@]}" --fail-on "$FAIL_ON" > /dev/null
+        echo "exit=$?" >> "$GITHUB_OUTPUT"
+
+    - name: Comment on the pull request
+      if: inputs.comment == 'true' && github.event.pull_request.number != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR: ${{ github.event.pull_request.number }}
+        REPORT: ${{ steps.diff.outputs.report }}
+      run: |
+        marker='<!-- keel-api-diff -->'
+        body="$(printf '%s\n%s\n\n<sub>dotnet keel diff, base %s</sub>' "$marker" "$(cat "$REPORT")" "${{ inputs.base || github.event.pull_request.base.sha }}")"
+        existing=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate --jq ".[] | select(.body | startswith(\"$marker\")) | .id" 2>/dev/null | head -n1 || true)
+        if [ -n "$existing" ]; then
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -f body="$body" > /dev/null \
+            || echo "::warning::Could not update the comment (a pull request from a fork has a read-only token). The report is in the job summary."
+        else
+          gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$body" > /dev/null \
+            || echo "::warning::Could not comment (a pull request from a fork has a read-only token). The report is in the job summary."
+        fi
+
+    - name: Fail on API changes
+      if: steps.diff.outputs.exit != '0'
+      shell: bash
+      run: |
+        echo "::error::API changes at or above '${{ inputs.fail-on }}': see the report in the job summary."
+        exit 1

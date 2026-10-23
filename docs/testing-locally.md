@@ -9,7 +9,7 @@ dotnet build
 dotnet run --project tests/Keel.Endpoints.Tests
 ```
 
-Expected: `69 passed, 0 failed` (`68` in an offline build, which skips the generated OpenAPI document test). The build itself proves the analyzers load: warnings are errors here.
+Expected: `73 passed, 0 failed` (`72` in an offline build, which skips the generated OpenAPI document test). The build itself proves the analyzers load: warnings are errors here.
 
 ## 2. Play with the sample API
 

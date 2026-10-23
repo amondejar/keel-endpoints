@@ -70,5 +70,46 @@ what it reads may gain members, never lose or change them.
 | Response type changed (`int64` to `int32` is fine, the reverse is not) | | New status code documented, non-2xx removed |
 | A 2xx status removed, a body removed, JSON switched to another media type | | Operation name changed (generated clients may rename methods) |
 
-`ApiManifest.Compare(baseline, current)` returns the same list as `ApiChange` records, for a custom policy
-or for comparing the manifests of two releases.
+`ApiManifest.Compare(baseline, current)` returns the same list as `ApiChange` records, for a custom policy.
+
+## Comparing versions
+
+`Keel.Endpoints.Tool` compares the committed manifest between two git refs, or two files:
+
+```bash
+dotnet tool install --global Keel.Endpoints.Tool --prerelease
+
+dotnet keel diff v1.0.0                         # since v1.0.0, against the working tree
+dotnet keel diff main HEAD --fail-on breaking   # exit code 1 on a breaking change
+dotnet keel diff v1.0.0 v1.1.0 --format markdown --output api-changes.md
+```
+
+Every `*api.manifest.json` in the repository is compared unless `--manifest` names some. Reports come as
+`text`, `markdown` (for pull requests and release notes) or `json`. Keel.Endpoints' own releases append
+this report to their GitHub release notes.
+
+## On pull requests
+
+The `api-diff` action keeps one pull request comment up to date with the API changes and writes them to the
+job summary:
+
+```yaml
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  api-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: amondejar/keel-endpoints/actions/api-diff@main
+        with:
+          fail-on: breaking
+```
+
+The manifest test makes sure the pull request carries the updated manifest; the action shows reviewers
+what it means. Inputs and outputs: [actions/api-diff](../actions/api-diff/README.md).
