@@ -3,6 +3,19 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [1.0.0-preview.3] - Unreleased
+
+No public API changes in the existing packages since 1.0.0-preview.1.
+
+### Added
+- **`Keel.Endpoints.OpenTelemetry`** (new package, preview): `AddKeelTelemetry()` tags ASP.NET Core's
+  request span and `http.server.request.duration` with `keel.operation` and `keel.feature`, and counts
+  validation errors per member in `keel.validation.errors`; `WithHandlerTelemetry()` adds a handler span,
+  `keel.handler.duration` and a logging scope; `AddKeelEndpointsInstrumentation()` on the OpenTelemetry
+  tracer and meter builders. Built on `System.Diagnostics`, AOT-compatible.
+- The Native AOT sample uses it, so CI checks it publishes without warnings.
+- `docs/observability.md`.
+
 ## [1.0.0-preview.2] - 2026-10-19
 
 No public API changes since 1.0.0-preview.1.
@@ -15,8 +28,7 @@ No public API changes since 1.0.0-preview.1.
 ### Fixed
 - The benchmark no longer starts a server, so an IDE launch profile with an https:// URL does not break it.
 
-
-## [1.0.0-preview.1] - Unreleased
+## [1.0.0-preview.1] - 2026-10-18
 
 The first 1.0 preview: the public API is frozen (see `docs/compatibility.md`).
 
@@ -27,9 +39,6 @@ The first 1.0 preview: the public API is frozen (see `docs/compatibility.md`).
   lambdas, in process; `--check 5` fails when Keel is more than 5% slower. A CI job keeps it running.
 - Documentation under `docs/`: getting started, endpoints, authorization, validation, OpenAPI, Native AOT,
   testing and compatibility.
-- Package icon, README badges, `SECURITY.md`, `CODE_OF_CONDUCT.md`, issue and pull request templates.
-- Releases create a GitHub release with the version's changelog section and the packages attached.
-- CI builds are deterministic (`ContinuousIntegrationBuild`), so the published packages are reproducible.
 
 ### Changed
 - Endpoints whose contract has nothing to validate opt out of the .NET 10 validation filter

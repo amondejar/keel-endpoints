@@ -1,0 +1,13 @@
+public const string Keel.Endpoints.Telemetry.KeelTelemetry.ActivitySourceName = "Keel.Endpoints"
+public const string Keel.Endpoints.Telemetry.KeelTelemetry.FeatureTag = "keel.feature"
+public const string Keel.Endpoints.Telemetry.KeelTelemetry.FieldTag = "keel.field"
+public const string Keel.Endpoints.Telemetry.KeelTelemetry.MeterName = "Keel.Endpoints"
+public const string Keel.Endpoints.Telemetry.KeelTelemetry.OperationTag = "keel.operation"
+public static Microsoft.Extensions.DependencyInjection.IServiceCollection Keel.Endpoints.Telemetry.KeelTelemetryExtensions.AddKeelTelemetry(this Microsoft.Extensions.DependencyInjection.IServiceCollection services)
+public static OpenTelemetry.Metrics.MeterProviderBuilder OpenTelemetry.Metrics.KeelMeterProviderBuilderExtensions.AddKeelEndpointsInstrumentation(this OpenTelemetry.Metrics.MeterProviderBuilder builder)
+public static OpenTelemetry.Trace.TracerProviderBuilder OpenTelemetry.Trace.KeelTracerProviderBuilderExtensions.AddKeelEndpointsInstrumentation(this OpenTelemetry.Trace.TracerProviderBuilder builder)
+public static TBuilder Keel.Endpoints.Telemetry.KeelTelemetryExtensions.WithHandlerTelemetry<TBuilder>(this TBuilder builder) where TBuilder : Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+static class Keel.Endpoints.Telemetry.KeelTelemetry
+static class Keel.Endpoints.Telemetry.KeelTelemetryExtensions
+static class OpenTelemetry.Metrics.KeelMeterProviderBuilderExtensions
+static class OpenTelemetry.Trace.KeelTracerProviderBuilderExtensions

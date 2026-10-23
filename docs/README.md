@@ -8,6 +8,7 @@
 | [Validation](validation.md) | .NET 10 validation, `[ValidatableType]`, FluentValidation, the 400 response |
 | [OpenAPI](openapi.md) | Operation names, tags, documented responses, Scalar |
 | [Native AOT](native-aot.md) | The generated registration, the two-step build, JSON contexts, limits |
+| [Observability](observability.md) | Operation and feature on traces and metrics, validation errors per field, handler timing |
 | [Testing](testing.md) | Typed calls with `EndpointClient`, the API manifest, the public API files |
 | [API manifest](api-manifest.md) | `api.manifest.json` and what counts as a breaking change |
 | [Diagnostics](diagnostics.md) | KEEL001 to KEEL006 and their code fixes |

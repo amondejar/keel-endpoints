@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Keel.Endpoints\Keel.Endpoints.csproj" />
+    <ProjectReference Include="..\..\src\Keel.Endpoints.OpenTelemetry\Keel.Endpoints.OpenTelemetry.csproj" />
     <!-- With the NuGet package, the analyzers, generator and build targets come with it; here they are wired by hand. -->
     <ProjectReference Include="..\..\src\Keel.Endpoints.Analyzers\Keel.Endpoints.Analyzers.csproj"
                       OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

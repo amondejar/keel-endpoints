@@ -18,6 +18,7 @@ internal static class PublicApiTests
         Check(typeof(EndpointBase).Assembly, "src/Keel.Endpoints/PublicAPI.txt");
         Check(typeof(Testing.EndpointClient).Assembly, "src/Keel.Endpoints.Testing/PublicAPI.txt");
         Check(typeof(FluentValidation.KeelFluentValidationExtensions).Assembly, "src/Keel.Endpoints.FluentValidation/PublicAPI.txt");
+        Check(typeof(Telemetry.KeelTelemetry).Assembly, "src/Keel.Endpoints.OpenTelemetry/PublicAPI.txt");
     }
 
     private static void Check(Assembly assembly, string relativePath) =>

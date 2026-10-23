@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <PackageId>Keel.Endpoints.OpenTelemetry</PackageId>
+    <Description>Observability for Keel.Endpoints: tags ASP.NET Core's request spans and http.server.request.duration with the endpoint's operation and feature, counts validation errors per field, and optionally traces and times each handler. Built on System.Diagnostics; works with OpenTelemetry, Application Insights or dotnet-counters.</Description>
+    <PackageTags>$(PackageTags);opentelemetry;observability;tracing;metrics</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!-- Only the API package: AddKeelEndpointsInstrumentation() on the tracer and meter builders. -->
+    <PackageReference Include="OpenTelemetry.Api" Version="1.15.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Keel.Endpoints\Keel.Endpoints.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <InternalsVisibleTo Include="Keel.Endpoints.Tests" />
+  </ItemGroup>
+
+</Project>

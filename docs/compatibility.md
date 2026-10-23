@@ -20,6 +20,9 @@ Keel.Endpoints follows [Semantic Versioning](https://semver.org/). From 1.0:
 
 ## Before 1.0
 
+`Keel.Endpoints.OpenTelemetry` joined in 1.0.0-preview.3. Its public API follows the same rule: once it has
+gone two previews without a change, it ships in 1.0.0 with the other packages.
+
 The road to 1.0 is two previews with no public API change (`1.0.0-preview.1`, `1.0.0-preview.2`), then
 1.0.0. A change needed in that window starts the count again. The public API test makes any change visible
 in the pull request.

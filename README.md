@@ -2,7 +2,7 @@
 
 # Keel.Endpoints
 
-[![CI](https://github.com/OWNER/keel-endpoints/actions/workflows/ci.yml/badge.svg)](https://github.com/amondejar/keel-endpoints/actions/workflows/ci.yml)
+[![CI](https://github.com/OWNER/keel-endpoints/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/keel-endpoints/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/vpre/Keel.Endpoints.svg?label=Keel.Endpoints)](https://www.nuget.org/packages/Keel.Endpoints)
 [![Downloads](https://img.shields.io/nuget/dt/Keel.Endpoints.svg)](https://www.nuget.org/packages/Keel.Endpoints)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -251,6 +251,20 @@ compatible GET api/invoices: response 200[].currency added
 Accept intended changes with `KEEL_UPDATE_MANIFEST=1 dotnet test` (compatible changes only) or
 `KEEL_UPDATE_MANIFEST=all`, then commit the file. CI never sets it. The rules are in
 [docs/api-manifest.md](docs/api-manifest.md).
+
+## Observability
+
+`Keel.Endpoints.OpenTelemetry` tags ASP.NET Core's request spans and `http.server.request.duration` with
+the operation and feature, counts validation errors per field, and can time each handler on its own:
+
+```csharp
+builder.Services.AddKeelTelemetry();
+builder.Services.AddOpenTelemetry()
+    .WithTracing(t => t.AddAspNetCoreInstrumentation().AddKeelEndpointsInstrumentation())
+    .WithMetrics(m => m.AddAspNetCoreInstrumentation().AddKeelEndpointsInstrumentation());
+```
+
+See [docs/observability.md](docs/observability.md).
 
 ## FluentValidation
 

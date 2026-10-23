@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 using Keel.Endpoints;
+using Keel.Endpoints.Telemetry;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -11,13 +12,14 @@ builder.Services.AddKeelEndpoints();
 builder.Services.AddValidation();
 builder.Services.AddProblemDetails();
 builder.Services.AddSingleton<TodoStore>();
+builder.Services.AddKeelTelemetry();   // keel.operation / keel.feature on request spans and metrics, AOT-safe
 // Native AOT has no reflection-based JSON: every type on the wire is listed in the context below.
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonContext.Default));
 
 var app = builder.Build();
 
 // Generated at compile time: one explicit registration per endpoint class, no reflection.
-app.MapKeelEndpoints("/api").AllowAnonymous();
+app.MapKeelEndpoints("/api").AllowAnonymous().WithHandlerTelemetry();
 
 app.Run();
 

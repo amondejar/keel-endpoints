@@ -14,6 +14,7 @@
     <ProjectReference Include="..\..\src\Keel.Endpoints\Keel.Endpoints.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.Testing\Keel.Endpoints.Testing.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.FluentValidation\Keel.Endpoints.FluentValidation.csproj" />
+    <ProjectReference Include="..\..\src\Keel.Endpoints.OpenTelemetry\Keel.Endpoints.OpenTelemetry.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.Analyzers\Keel.Endpoints.Analyzers.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.CodeFixes\Keel.Endpoints.CodeFixes.csproj" />
     <ProjectReference Include="..\..\samples\Keel.Sample\Keel.Sample.csproj" />
