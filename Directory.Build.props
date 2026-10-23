@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -15,8 +15,8 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>aspnetcore;minimal-api;endpoints;vertical-slice;validation;openapi</PackageTags>
-    <PackageProjectUrl>https://github.com/OWNER/keel-endpoints</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/OWNER/keel-endpoints</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/TU-USUARIO/keel-endpoints</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/TU-USUARIO/keel-endpoints</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSymbols>true</IncludeSymbols>

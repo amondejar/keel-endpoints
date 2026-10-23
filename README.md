@@ -1,8 +1,8 @@
-<img src="assets/icon.png" alt="" width="64" align="right">
+﻿<img src="assets/icon.png" alt="" width="64" align="right">
 
 # Keel.Endpoints
 
-[![CI](https://github.com/OWNER/keel-endpoints/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/keel-endpoints/actions/workflows/ci.yml)
+[![CI](https://github.com/amondejar/keel-endpoints/actions/workflows/ci.yml/badge.svg)](https://github.com/amondejar/keel-endpoints/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/vpre/Keel.Endpoints.svg?label=Keel.Endpoints)](https://www.nuget.org/packages/Keel.Endpoints)
 [![Downloads](https://img.shields.io/nuget/dt/Keel.Endpoints.svg)](https://www.nuget.org/packages/Keel.Endpoints)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

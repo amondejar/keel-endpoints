@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -14,7 +14,7 @@ namespace Keel.Endpoints.Analyzers;
 public sealed class EndpointAnalyzer : DiagnosticAnalyzer
 {
     private const string Category = "Keel.Endpoints";
-    private const string HelpBase = "https://github.com/OWNER/keel-endpoints/blob/main/docs/diagnostics.md#";
+    private const string HelpBase = "https://github.com/TU-USUARIO/keel-endpoints/blob/main/docs/diagnostics.md#";
 
     public static readonly DiagnosticDescriptor DuplicateRoute = new(
         "KEEL001",

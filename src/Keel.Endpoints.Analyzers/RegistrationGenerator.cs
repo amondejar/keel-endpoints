@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -30,14 +30,14 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
         "Endpoint class cannot be registered by the generated code",
         "Endpoint '{0}' is {1}, so the generated MapKeelEndpoints() cannot register it; make it public or internal and not nested in a private type",
         "Keel.Endpoints", DiagnosticSeverity.Warning, isEnabledByDefault: true,
-        helpLinkUri: "https://github.com/OWNER/keel-endpoints/blob/main/docs/diagnostics.md#keel005");
+        helpLinkUri: "https://github.com/TU-USUARIO/keel-endpoints/blob/main/docs/diagnostics.md#keel005");
 
     public static readonly DiagnosticDescriptor GroupNotUsable = new(
         "KEEL006",
         "Endpoint group cannot be used by the generated code",
         "Endpoint group '{0}' {1}, so the generated MapKeelEndpoints() cannot create it; give it a public parameterless constructor and make it public or internal",
         "Keel.Endpoints", DiagnosticSeverity.Warning, isEnabledByDefault: true,
-        helpLinkUri: "https://github.com/OWNER/keel-endpoints/blob/main/docs/diagnostics.md#keel006");
+        helpLinkUri: "https://github.com/TU-USUARIO/keel-endpoints/blob/main/docs/diagnostics.md#keel006");
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

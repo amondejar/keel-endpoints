@@ -1,8 +1,8 @@
-blank_issues_enabled: true
+﻿blank_issues_enabled: true
 contact_links:
   - name: Security vulnerability
-    url: https://github.com/OWNER/keel-endpoints/security/advisories/new
+    url: https://github.com/TU-USUARIO/keel-endpoints/security/advisories/new
     about: Report it privately, not in a public issue.
   - name: Question or idea
-    url: https://github.com/OWNER/keel-endpoints/discussions
+    url: https://github.com/TU-USUARIO/keel-endpoints/discussions
     about: Ask in Discussions.

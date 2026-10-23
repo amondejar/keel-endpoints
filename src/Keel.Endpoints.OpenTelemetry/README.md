@@ -1,4 +1,4 @@
-# Keel.Endpoints.OpenTelemetry
+﻿# Keel.Endpoints.OpenTelemetry
 
 Observability for [Keel.Endpoints](https://www.nuget.org/packages/Keel.Endpoints), on top of what ASP.NET
 Core already emits.
@@ -23,4 +23,4 @@ app.MapKeelEndpoints("/api").RequireAuthorization().WithHandlerTelemetry();   //
 
 Built on `System.Diagnostics` (`ActivitySource` `Keel.Endpoints`, `Meter` `Keel.Endpoints`), so it works with
 OpenTelemetry, Application Insights or `dotnet-counters`, and under Native AOT. See the
-[observability guide](https://github.com/OWNER/keel-endpoints/blob/main/docs/observability.md).
+[observability guide](https://github.com/amondejar/keel-endpoints/blob/main/docs/observability.md).
