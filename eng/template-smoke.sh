@@ -16,7 +16,8 @@ mkdir -p "$feed"
 trap 'kill $(jobs -p) 2>/dev/null || true; dotnet new uninstall Keel.Endpoints.Templates > /dev/null 2>&1 || true; rm -rf "$work"' EXIT
 export NUGET_PACKAGES="$work/packages"   # never reuse a cached Keel package from another run
 
-dotnet pack "$root/src/Keel.Endpoints" -c Release -p:Version="$version" -o "$feed" ${KEEL_PACK_ARGS:-}
+# A throwaway version, lower than the published baseline: package validation does not apply.
+dotnet pack "$root/src/Keel.Endpoints" -c Release -p:Version="$version" -p:KeelPackageValidation=false -o "$feed" ${KEEL_PACK_ARGS:-}
 dotnet pack "$root/src/Keel.Endpoints.Templates" -c Release -p:Version="$version" -o "$feed" ${KEEL_PACK_ARGS:-}
 
 dotnet new uninstall Keel.Endpoints.Templates > /dev/null 2>&1 || true
