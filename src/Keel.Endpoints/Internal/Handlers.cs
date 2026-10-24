@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Keel.Endpoints.Internal;
 
@@ -77,20 +78,36 @@ internal static class Handlers
         => Activate<TEndpoint>(services).HandleAsync(request, ct);
 
     public static ServerSentEventsResult<TItem> EventStreamFromParameters<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest, TItem>(
-        [AsParameters] TRequest request, [FromServices] IServiceProvider services, CancellationToken ct)
+        [AsParameters] TRequest request, [FromServices] IServiceProvider services, HttpContext context, CancellationToken ct)
         where TEndpoint : StreamEndpoint<TRequest, TItem>
         where TRequest : notnull
         => TypedResults.ServerSentEvents(
-            Activate<TEndpoint>(services).HandleAsync(request, ct),
+            OpenStream(context, Activate<TEndpoint>(services).HandleAsync(request, ct), ct),
             EventTypes<TEndpoint>.Value);
 
     public static ServerSentEventsResult<TItem> EventStreamFromBody<[DynamicallyAccessedMembers(Ctors)] TEndpoint, TRequest, TItem>(
-        [FromBody] TRequest request, [FromServices] IServiceProvider services, CancellationToken ct)
+        [FromBody] TRequest request, [FromServices] IServiceProvider services, HttpContext context, CancellationToken ct)
         where TEndpoint : StreamEndpoint<TRequest, TItem>
         where TRequest : notnull
         => TypedResults.ServerSentEvents(
-            Activate<TEndpoint>(services).HandleAsync(request, ct),
+            OpenStream(context, Activate<TEndpoint>(services).HandleAsync(request, ct), ct),
             EventTypes<TEndpoint>.Value);
+
+    /// <summary>
+    /// Sends the response headers before waiting for the first event, so clients and proxies see the stream open
+    /// at once instead of waiting (and perhaps timing out) until something happens. Costs an HttpContext argument
+    /// on stream endpoints only.
+    /// </summary>
+    private static async IAsyncEnumerable<TItem> OpenStream<TItem>(HttpContext context, IAsyncEnumerable<TItem> items, [EnumeratorCancellation] CancellationToken ct)
+    {
+        // The result has set the event-stream headers by the time it asks for the first item.
+        if (!context.Response.HasStarted)
+        {
+            await context.Response.StartAsync(ct);
+            await context.Response.Body.FlushAsync(ct);
+        }
+        await foreach (var item in items.WithCancellation(ct)) yield return item;
+    }
 
     private const DynamicallyAccessedMemberTypes Ctors = DynamicallyAccessedMemberTypes.PublicConstructors;
 

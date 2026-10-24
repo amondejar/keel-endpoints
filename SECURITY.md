@@ -12,7 +12,8 @@ released as a patch version and credited to you in the changelog, unless you pre
 
 | Version | Supported |
 | --- | --- |
-| Latest 1.x preview or release | Yes |
+| Latest 1.x release | Yes |
+| 1.0 previews and release candidates | Until 1.0.0 ships; then upgrade to it |
 | 0.x previews | No: upgrade to the latest version |
 
 Keel.Endpoints runs inside ASP.NET Core; vulnerabilities in ASP.NET Core itself go to

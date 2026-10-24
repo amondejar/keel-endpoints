@@ -113,6 +113,37 @@ internal static class EndpointTests
             return Task.CompletedTask;
         });
 
+        Test("A feature directly in Features or a version folder names its own tag and operation", () =>
+        {
+            Assert.Equal("Health", KeelEndpointsExtensions.OperationName(typeof(NamingFixtures.Features.Health.Endpoint)));
+            Assert.Equal("Health", Internal.OpenApiConventions.DefaultTag(typeof(NamingFixtures.Features.Health.Endpoint)));
+            Assert.Equal("Health", KeelEndpointsExtensions.OperationName(typeof(NamingFixtures.Features.V2_1.Health.Endpoint)));
+            Assert.Equal("Health", Internal.OpenApiConventions.DefaultTag(typeof(NamingFixtures.Features.V2_1.Health.Endpoint)));
+            Assert.Equal("OrdersGet", KeelEndpointsExtensions.OperationName(typeof(NamingFixtures.Features.V1.Orders.Get.Endpoint)));
+            Assert.Equal("Orders", Internal.OpenApiConventions.DefaultTag(typeof(NamingFixtures.Features.V1.Orders.Get.Endpoint)));
+            return Task.CompletedTask;
+        });
+
+        Test("Server-Sent Events: the headers are sent before the first event", async () =>
+        {
+            var builder = WebApplication.CreateBuilder(["--urls", "http://127.0.0.1:0", "--Logging:LogLevel:Default=Warning"]);
+            builder.Services.AddKeelEndpoints();
+            await using var app = builder.Build();
+            app.MapEndpoint<SlowEventsEndpoint>();
+            await app.StartAsync();
+
+            using var http = new HttpClient { BaseAddress = new Uri(app.Urls.First()), Timeout = TimeSpan.FromSeconds(10) };
+            SlowEventsEndpoint.Gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            using var response = await http.GetAsync("/slow-events?count=1", HttpCompletionOption.ResponseHeadersRead)
+                .WaitAsync(TimeSpan.FromSeconds(5));   // before: no headers until the first event, so this timed out
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal("text/event-stream", response.Content.Headers.ContentType?.MediaType);
+            SlowEventsEndpoint.Gate.SetResult();
+            using var reader = new StreamReader(await response.Content.ReadAsStreamAsync());
+            Assert.Equal("event: tick", await reader.ReadLineAsync());
+        });
+
         Test("StreamEndpoint in its default format writes a JSON array", async () =>
         {
             var builder = WebApplication.CreateBuilder(["--urls", "http://127.0.0.1:0", "--Logging:LogLevel:Default=Warning"]);
@@ -143,5 +174,20 @@ public sealed class JsonStreamEndpoint : StreamEndpoint<CountRequest, int>
             await Task.Yield();
             yield return i;
         }
+    }
+}
+
+
+/// <summary>Waits for <see cref="Gate"/> before its first event.</summary>
+[Get("slow-events"), ServerSentEvents("tick")]
+[Microsoft.AspNetCore.Authorization.AllowAnonymous]
+public sealed class SlowEventsEndpoint : StreamEndpoint<CountRequest, int>
+{
+    public static TaskCompletionSource Gate { get; set; } = new();
+
+    public override async IAsyncEnumerable<int> HandleAsync(CountRequest request, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
+    {
+        await Gate.Task.WaitAsync(ct);
+        yield return 1;
     }
 }

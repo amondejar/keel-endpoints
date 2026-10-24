@@ -12,6 +12,21 @@
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
+  <!--
+    Package validation: every library package is compared with the last published version and the pack fails on a
+    binary breaking change (a removed or changed public member, a dropped target framework), on top of PublicAPI.txt.
+    From 1.0.0 on, the baseline is the latest 1.x release. It downloads the baseline, so offline builds skip it
+    unless KeelPackageValidation=true.
+  -->
+  <PropertyGroup Condition="'$(KeelPackageValidation)' == ''">
+    <KeelPackageValidation Condition="'$(KeelOfflineRoslyn)' == 'true'">false</KeelPackageValidation>
+    <KeelPackageValidation Condition="'$(KeelOfflineRoslyn)' != 'true'">true</KeelPackageValidation>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IsPackable)' == 'true' and '$(PackAsTool)' != 'true' and '$(PackageType)' != 'Template' and '$(KeelPackageValidation)' == 'true'">
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>1.0.0-preview.6</PackageValidationBaselineVersion>
+  </PropertyGroup>
+
   <!-- Every package carries the project icon. -->
   <PropertyGroup Condition="'$(IsPackable)' == 'true'">
     <PackageIcon>icon.png</PackageIcon>

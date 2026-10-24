@@ -19,15 +19,21 @@ Keel.Endpoints follows [Semantic Versioning](https://semver.org/). From 1.0:
 - Experimental ASP.NET Core APIs Keel builds on (.NET 10 validation, ASP0029): if ASP.NET Core changes
   them, Keel follows in a minor version and says so.
 
-## Before 1.0
+## How it is checked
 
-`Keel.Endpoints.OpenTelemetry` joined in 1.0.0-preview.3, `Keel.Endpoints.Tool` in preview.4 and
-`Keel.Endpoints.Idempotency` in preview.5 and `Keel.Endpoints.Versioning` in preview.6. Their public API follows the same rule: once it has
-gone two previews without a change, it ships in 1.0.0 with the other packages.
+- **`PublicAPI.txt`**: a test fails on any change to a package's public API until the file is updated, so every
+  change is visible in the pull request. From 1.0, a removed or changed line needs a major version.
+- **Package validation**: `dotnet pack` compares each library package with the last published version and
+  fails on a binary breaking change (`Directory.Build.targets`, `PackageValidationBaselineVersion`).
+- **`api.manifest.json`** of the sample: the HTTP behavior Keel produces for a set of endpoints, compared in a
+  test, so a change in routing, binding or metadata shows up as a manifest diff.
 
-The road to 1.0 is two previews with no public API change (`1.0.0-preview.1`, `1.0.0-preview.2`), then
-1.0.0. A change needed in that window starts the count again. The public API test makes any change visible
-in the pull request.
+## The road to 1.0
+
+`1.0.0-rc.1` is the candidate: the public API of every package is what 1.0.0 will ship (it has not changed
+since `1.0.0-preview.6`). It fixes what showed up building a full application on the previews, and 1.0.0
+follows unless a release candidate turns up a problem; a fix that changes the public API would need another
+release candidate.
 
 ## Supported frameworks
 

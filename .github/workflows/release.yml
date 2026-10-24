@@ -56,3 +56,11 @@ jobs:
           prerelease=""
           case "$VERSION" in *-*) prerelease="--prerelease" ;; esac
           gh release create "$GITHUB_REF_NAME" artifacts/*.nupkg --title "$VERSION" --notes-file release-notes.md $prerelease
+
+      # Stable releases move the major tag (v1) that workflows use for the api-diff action.
+      - name: Move the major version tag
+        if: ${{ !contains(github.ref_name, '-') }}
+        run: |
+          major="v${VERSION%%.*}"
+          git tag -f "$major" "$GITHUB_REF_NAME"
+          git push -f origin "$major"

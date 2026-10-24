@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - uses: amondejar/keel-endpoints/actions/api-diff@main
+      - uses: amondejar/keel-endpoints/actions/api-diff@v1
         with:
           fail-on: breaking   # breaking | security | any | none (default)
 ```

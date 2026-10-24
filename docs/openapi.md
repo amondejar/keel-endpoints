@@ -13,9 +13,10 @@ app.MapScalarApiReference();         // /scalar (Scalar.AspNetCore)
 
 - **Operation names.** A class named `Endpoint` takes its name from its last two namespace segments
   (`Orders.Get.Endpoint` is `OrdersGet`); any other class uses its name without the `Endpoint` suffix
-  (`GetOrderEndpoint` is `GetOrder`). Generated clients use it for method names.
-- **Tags from the namespace.** `Orders.Get.Endpoint` is tagged `Orders`. `[Tags]`, `options.Tags(...)` or a
-  tag on any group wins; `KeelOptions.TagFromNamespace = false` turns it off.
+  (`GetOrderEndpoint` is `GetOrder`). Generated clients use it for method names. A single-operation feature
+  directly in `Features` or in a version folder names itself: `Features.Health.Endpoint` is `Health`.
+- **Tags from the namespace.** `Orders.Get.Endpoint` is tagged `Orders`, `Features.Health.Endpoint` is tagged
+  `Health`. `[Tags]`, `options.Tags(...)` or a tag on any group wins; `KeelOptions.TagFromNamespace = false` turns it off.
 - **The validation 400**, for endpoints whose contract has rules.
 
 `options.Summary(...)` and attributes on the class (`[EndpointSummary]`, `[EndpointDescription]`,

@@ -67,3 +67,19 @@ which can leave its endpoints without the authorization it declares.
 
 **Fix:** give the group a public parameterless constructor and make it reachable. Groups configure
 endpoints; they do not take dependencies.
+
+## KEEL007
+
+**Collection items have validation rules but are not validated.** The .NET 10 validation generator follows the
+members of a validatable type, but it does not discover a type that is reached only as the items of an array or
+collection. Such items are never validated, without any error:
+
+```csharp
+[ValidatableType]
+public sealed record CreateOrder([property: Required, MinLength(1)] CreateOrderLine[] Lines);
+
+public sealed record CreateOrderLine([property: Range(1, 10)] int Quantity);   // KEEL007: Quantity 0 would pass
+```
+
+**Fix:** mark the item type `[ValidatableType]`; the code fix does it. A type that is also reached through an
+ordinary member (`CreateOrderLine First`) is discovered that way and is not reported.

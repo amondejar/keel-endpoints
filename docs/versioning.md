@@ -58,4 +58,30 @@ sunset policies: all configured in `AddApiVersioning(...)` as its documentation 
 - **The API manifest** gets one entry per version (`GET api/v1/orders/{id}`, `GET api/v2/orders/{id}`) with
   the versioned ApiExplorer (`AddApiExplorer(o => o.SubstituteApiVersionInUrl = true)`), so a change to v2 is
   never mistaken for a break in v1, and removing v1 shows up as breaking.
-- **OpenAPI**: one document per version through the versioned ApiExplorer's group names (`v1`, `v2`).
+- **OpenAPI**: one document per version, with `Asp.Versioning.OpenApi` (see below).
+
+## One OpenAPI document per version
+
+With .NET 10's OpenAPI (`Microsoft.AspNetCore.OpenApi`), register the documents through Asp.Versioning instead
+of `builder.Services.AddOpenApi()`, and map them per version. Its analyzers warn otherwise (AV0029, AV0030).
+
+```bash
+dotnet add package Asp.Versioning.OpenApi
+```
+
+```csharp
+builder.Services.AddApiVersioning(o =>
+    {
+        o.ReportApiVersions = true;
+        o.ApiVersionReader = new UrlSegmentApiVersionReader();
+    })
+    .AddApiExplorer(o => { o.GroupNameFormat = "'v'V"; o.SubstituteApiVersionInUrl = true; })
+    .AddOpenApi();                                   // not builder.Services.AddOpenApi()
+
+app.MapOpenApi().WithDocumentPerVersion();           // /openapi/v1.json, /openapi/v2.json
+app.MapScalarApiReference(o => o.AddDocument("v1").AddDocument("v2"));
+```
+
+`Asp.Versioning.OpenApi` needs a recent `Microsoft.AspNetCore.OpenApi` (10.0.10 for Asp.Versioning 10.2); reference
+at least that version, or NuGet reports a downgrade (NU1605). [keel-shop](https://github.com/amondejar/keel-shop)
+is a complete application set up this way.

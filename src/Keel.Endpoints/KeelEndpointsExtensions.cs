@@ -87,7 +87,9 @@ public static class KeelEndpointsExtensions
         }
 
         var segments = (endpointType.Namespace ?? string.Empty).Split('.', StringSplitOptions.RemoveEmptyEntries);
-        return string.Concat(segments.TakeLast(2));
+        // Features.Health.Endpoint is "Health", not "FeaturesHealth"; Features.V2.Health.Endpoint is "Health" too
+        // (the versioning package adds the version).
+        return segments.Length > 1 && Internal.EndpointNames.IsContainer(segments[^2]) ? segments[^1] : string.Concat(segments.TakeLast(2));
     }
 }
 

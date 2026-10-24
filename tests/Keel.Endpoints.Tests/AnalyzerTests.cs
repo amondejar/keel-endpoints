@@ -127,6 +127,46 @@ internal static class AnalyzerTests
                 """);
             Assert.Equal("KEEL004", string.Join(",", ids));
         });
+        Test("KEEL007: collection items with rules need [ValidatableType]", async () =>
+        {
+            var ids = await DiagnosticsAsync("""
+                public sealed record Line([property: Range(1, 10)] int Quantity);
+                [ValidatableType]
+                public sealed record Order([property: Required] Line[] Lines, System.Collections.Generic.List<Line>? More);
+                [Post("orders")]
+                public sealed class OrderEndpoint : Endpoint<Order> { public override Task HandleAsync(Order r, CancellationToken ct) => Task.CompletedTask; }
+                """);
+            Assert.Equal("KEEL007", string.Join(",", ids));   // once per item type
+        });
+
+        Test("KEEL007: not for marked items, items reached directly, or items without rules", async () =>
+        {
+            var ids = await DiagnosticsAsync("""
+                [ValidatableType]
+                public sealed record Marked([property: Range(1, 10)] int Quantity);
+                public sealed record Direct([property: Range(1, 10)] int Quantity);
+                public sealed record Plain(int Quantity);
+                [ValidatableType]
+                public sealed record Order(Marked[] A, Direct[] B, Direct First, System.Collections.Generic.IReadOnlyList<Plain> C, System.Collections.Generic.Dictionary<string, Plain> D, string[] Tags);
+                [Post("orders")]
+                public sealed class OrderEndpoint : Endpoint<Order> { public override Task HandleAsync(Order r, CancellationToken ct) => Task.CompletedTask; }
+                """);
+            Assert.Equal("", string.Join(",", ids));
+        });
+
+        Test("KEEL007: items nested below a member are found too", async () =>
+        {
+            var ids = await DiagnosticsAsync("""
+                public sealed record Line([property: Required] string Sku);
+                [ValidatableType]
+                public sealed record Cart(Line[] Lines);
+                [BindRequest(RequestBinding.Parameters), ValidatableType]
+                public sealed record Update(string Id, [property: FromBody] Cart Body);
+                [Put("carts/{id}")]
+                public sealed class UpdateEndpoint : Endpoint<Update> { public override Task HandleAsync(Update r, CancellationToken ct) => Task.CompletedTask; }
+                """);
+            Assert.Equal("KEEL007", string.Join(",", ids));
+        });
     }
 
     private static async Task<IReadOnlyList<string>> DiagnosticsAsync(string source)

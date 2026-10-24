@@ -55,7 +55,7 @@ internal static class GeneratorTests
 
             Assert.Equal("", string.Join(",", errors));
             Assert.True(source.Contains("[global::Microsoft.AspNetCore.Http.AsParameters] global::Rename request")); // PUT, but [BindRequest]
-            Assert.True(source.Contains("TypedResults.ServerSentEvents("));
+            Assert.True(source.Contains("TypedResults.ServerSentEvents(OpenStream(httpContext, "));   // headers before the first event
             Assert.True(source.Contains("static ([global::Microsoft.AspNetCore.Mvc.FromServices] global::System.IServiceProvider services, global::System.Threading.CancellationToken cancellationToken) => global::Keel.Endpoints.Infrastructure.GeneratedEndpoints.Activate<global::PingEndpoint>(services).HandleAsync(cancellationToken)"));
         });
 

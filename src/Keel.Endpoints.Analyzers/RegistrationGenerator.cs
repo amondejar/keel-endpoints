@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -30,14 +30,14 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
         "Endpoint class cannot be registered by the generated code",
         "Endpoint '{0}' is {1}, so the generated MapKeelEndpoints() cannot register it; make it public or internal and not nested in a private type",
         "Keel.Endpoints", DiagnosticSeverity.Warning, isEnabledByDefault: true,
-        helpLinkUri: "https://github.com/TU-USUARIO/keel-endpoints/blob/main/docs/diagnostics.md#keel005");
+        helpLinkUri: "https://github.com/amondejar/keel-endpoints/blob/main/docs/diagnostics.md#keel005");
 
     public static readonly DiagnosticDescriptor GroupNotUsable = new(
         "KEEL006",
         "Endpoint group cannot be used by the generated code",
         "Endpoint group '{0}' {1}, so the generated MapKeelEndpoints() cannot create it; give it a public parameterless constructor and make it public or internal",
         "Keel.Endpoints", DiagnosticSeverity.Warning, isEnabledByDefault: true,
-        helpLinkUri: "https://github.com/TU-USUARIO/keel-endpoints/blob/main/docs/diagnostics.md#keel006");
+        helpLinkUri: "https://github.com/amondejar/keel-endpoints/blob/main/docs/diagnostics.md#keel006");
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
@@ -208,7 +208,8 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
             {
                 Shape.WithoutRequest => $"static ({parameters}) => {activate}.HandleAsync(cancellationToken)",
                 Shape.NoContent => $"static async ({parameters}) => {{ await {activate}.HandleAsync(request, cancellationToken); return {Http}.TypedResults.NoContent(); }}",
-                Shape.Stream when e.ServerSentEvents => $"static ({parameters}) => {Http}.TypedResults.ServerSentEvents({activate}.HandleAsync(request, cancellationToken), {Gen}.EventType<{e.TypeName}>())",
+                // Streams take the HttpContext to send the headers before the first event (see OpenStream below).
+                Shape.Stream when e.ServerSentEvents => $"static ({parameters.Replace(" global::System.Threading.CancellationToken cancellationToken", $" {Http}.HttpContext httpContext, global::System.Threading.CancellationToken cancellationToken")}) => {Http}.TypedResults.ServerSentEvents(OpenStream(httpContext, {activate}.HandleAsync(request, cancellationToken), cancellationToken), {Gen}.EventType<{e.TypeName}>())",
                 _ => $"static ({parameters}) => {activate}.HandleAsync(request, cancellationToken)",
             };
 
@@ -232,6 +233,19 @@ public sealed class RegistrationGenerator : IIncrementalGenerator
 
         sb.AppendLine();
         sb.AppendLine("            return group;");
+        sb.AppendLine("        }");
+        sb.AppendLine();
+        sb.AppendLine("        /// <summary>Sends the response headers before the first event, so the stream opens at once.</summary>");
+        sb.AppendLine("        private static async global::System.Collections.Generic.IAsyncEnumerable<TItem> OpenStream<TItem>(");
+        sb.AppendLine($"            {Http}.HttpContext context, global::System.Collections.Generic.IAsyncEnumerable<TItem> items,");
+        sb.AppendLine("            [global::System.Runtime.CompilerServices.EnumeratorCancellation] global::System.Threading.CancellationToken cancellationToken)");
+        sb.AppendLine("        {");
+        sb.AppendLine("            if (!context.Response.HasStarted)");
+        sb.AppendLine("            {");
+        sb.AppendLine("                await context.Response.StartAsync(cancellationToken);");
+        sb.AppendLine("                await context.Response.Body.FlushAsync(cancellationToken);");
+        sb.AppendLine("            }");
+        sb.AppendLine("            await foreach (var item in global::System.Threading.Tasks.TaskAsyncEnumerableExtensions.WithCancellation(items, cancellationToken)) yield return item;");
         sb.AppendLine("        }");
         sb.AppendLine("    }");
         sb.AppendLine("}");

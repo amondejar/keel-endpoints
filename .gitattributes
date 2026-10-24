@@ -1,0 +1,5 @@
+# LF everywhere, on every OS: committed files (PublicAPI.txt, api.manifest.json, scripts, raw string literals
+# in tests) compare byte for byte, and Windows checkouts would otherwise turn them into CRLF.
+* text=auto eol=lf
+*.png binary
+*.ico binary

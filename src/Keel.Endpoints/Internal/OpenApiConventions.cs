@@ -14,13 +14,14 @@ internal static class OpenApiConventions
     /// <summary>
     /// The tag for an endpoint without one. A class named <c>Endpoint</c> lives in its operation's
     /// namespace (<c>Invoices.Get</c>), so the feature is the segment before it; any other class
-    /// lives in its feature's namespace, so the feature is the last segment.
+    /// lives in its feature's namespace, so the feature is the last segment. A single-operation feature
+    /// directly in a container folder (<c>Features.Health</c>, <c>Features.V2.Health</c>) is its own tag.
     /// </summary>
     public static string? DefaultTag(Type endpointType)
     {
         var segments = (endpointType.Namespace ?? string.Empty).Split('.', StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length == 0) return null;
-        return endpointType.Name == "Endpoint" && segments.Length > 1 ? segments[^2] : segments[^1];
+        return endpointType.Name == "Endpoint" && segments.Length > 1 && !EndpointNames.IsContainer(segments[^2]) ? segments[^2] : segments[^1];
     }
 
     /// <summary>

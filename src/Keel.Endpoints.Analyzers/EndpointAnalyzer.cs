@@ -49,6 +49,14 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
         description: "The .NET 10 validation generator only discovers contract types reached through endpoint classes when they carry [ValidatableType].",
         helpLinkUri: HelpBase + "keel004");
 
+    public static readonly DiagnosticDescriptor CollectionItemsNotValidated = new(
+        "KEEL007",
+        "Collection items have validation rules but are not validated",
+        "Type '{0}' has validation rules but is reached only as the items of '{1}.{2}', and .NET 10 validation does not discover types reached only through collections; mark '{0}' [ValidatableType] so its items are validated",
+        Category, DiagnosticSeverity.Warning, isEnabledByDefault: true,
+        description: "The .NET 10 validation generator follows the members of a validatable type, but not the item type of an array or collection, unless that type is discovered another way.",
+        helpLinkUri: HelpBase + "keel007");
+
     private static readonly Regex RouteParameter = new(@"\{\*{0,2}([A-Za-z_][A-Za-z0-9_]*)[^}]*\}", RegexOptions.Compiled);
     private static readonly Regex AnyRouteParameter = new(@"\{[^}]*\}", RegexOptions.Compiled);
 
@@ -67,7 +75,7 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
         ImmutableHashSet.Create("Endpoint`2", "Endpoint`1", "ResultEndpoint`2", "StreamEndpoint`2");
 
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(DuplicateRoute, RouteParameterNotInContract, RouteParameterWithBodyContract, ContractNotValidatable);
+        ImmutableArray.Create(DuplicateRoute, RouteParameterNotInContract, RouteParameterWithBodyContract, ContractNotValidatable, CollectionItemsNotValidated);
 
     public override void Initialize(AnalysisContext context)
     {
@@ -76,6 +84,8 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
 
         context.RegisterCompilationStartAction(start =>
         {
+            // One KEEL007 per item type, however many contracts reach it.
+            var reportedItems = new ConcurrentDictionary<ISymbol, bool>(SymbolEqualityComparer.Default);
             var routes = new ConcurrentBag<(string Key, string Method, string Template, INamedTypeSymbol Type, Location Location, HashSet<string> Versions)>();
 
             // With the registration written to disk (Native AOT), the .NET 10 validation generator sees every
@@ -102,6 +112,7 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
 
                 CheckRouteParameters(symbolContext, type, contract, method, template, location);
                 if (!registrationFile) CheckValidatable(symbolContext, contract);
+                CheckCollectionItems(symbolContext, contract, reportedItems);
             }, SymbolKind.NamedType);
 
             start.RegisterCompilationEndAction(end =>
@@ -219,6 +230,85 @@ public sealed class EndpointAnalyzer : DiagnosticAnalyzer
 
         context.ReportDiagnostic(Diagnostic.Create(ContractNotValidatable, contract.Locations.First(), contract.Name));
     }
+
+    /// <summary>
+    /// KEEL007: walks the contract's members and reports item types of arrays and collections that have
+    /// validation rules but no [ValidatableType], unless a member reaches them directly (then the generator finds them).
+    /// </summary>
+    private static void CheckCollectionItems(SymbolAnalysisContext context, INamedTypeSymbol contract, ConcurrentDictionary<ISymbol, bool> reported)
+    {
+        var direct = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default) { contract };
+        var items = new List<(ITypeSymbol Item, INamedTypeSymbol Owner, string Member)>();
+        var pending = new Stack<INamedTypeSymbol>();
+        pending.Push(contract);
+        var visited = new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default);
+
+        while (pending.Count > 0)
+        {
+            var type = pending.Pop();
+            if (!visited.Add(type)) continue;
+
+            foreach (var property in type.GetMembers().OfType<IPropertySymbol>())
+            {
+                if (property.IsStatic || property.DeclaredAccessibility != Accessibility.Public || property.IsIndexer) continue;
+                var propertyType = Unwrap(property.Type);
+                if (ItemType(propertyType) is { } item)
+                {
+                    item = Unwrap(item);
+                    if (IsSourceComplexType(item))
+                    {
+                        items.Add((item, type, property.Name));
+                        pending.Push((INamedTypeSymbol)item);
+                    }
+                }
+                else if (IsSourceComplexType(propertyType))
+                {
+                    direct.Add(propertyType);
+                    pending.Push((INamedTypeSymbol)propertyType);
+                }
+            }
+        }
+
+        foreach (var (item, owner, member) in items)
+        {
+            if (direct.Contains(item) || IsValidatable(item) || !HasRules((INamedTypeSymbol)item)) continue;
+            if (!reported.TryAdd(item, true)) continue;
+            var location = item.Locations.FirstOrDefault(l => l.IsInSource) ?? Location.None;
+            context.ReportDiagnostic(Diagnostic.Create(CollectionItemsNotValidated, location, item.Name, owner.Name, member));
+        }
+    }
+
+    private static ITypeSymbol Unwrap(ITypeSymbol type) =>
+        type is INamedTypeSymbol { OriginalDefinition.SpecialType: SpecialType.System_Nullable_T } nullable ? nullable.TypeArguments[0] : type;
+
+    /// <summary>The item type of an array or an IEnumerable&lt;T&gt; (not a string or a dictionary), or null.</summary>
+    private static ITypeSymbol? ItemType(ITypeSymbol type)
+    {
+        if (type is IArrayTypeSymbol array) return array.ElementType;
+        if (type.SpecialType == SpecialType.System_String || type is not INamedTypeSymbol named) return null;
+
+        List<INamedTypeSymbol> interfaces = named.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T
+            ? [named]
+            : named.AllInterfaces.Where(i => i.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T).ToList();
+        if (interfaces.Count != 1) return null;
+        var item = interfaces[0].TypeArguments[0];
+        // Dictionaries enumerate key/value pairs: not item types people annotate.
+        return item is INamedTypeSymbol { Name: "KeyValuePair" } ? null : item;
+    }
+
+    private static bool IsSourceComplexType(ITypeSymbol type) =>
+        type is INamedTypeSymbol { TypeKind: TypeKind.Class or TypeKind.Struct } named
+        && named.SpecialType == SpecialType.None
+        && named.Locations.Any(l => l.IsInSource);
+
+    private static bool IsValidatable(ITypeSymbol type) =>
+        type.GetAttributes().Any(a => a.AttributeClass?.Name == "ValidatableTypeAttribute");
+
+    private static bool HasRules(INamedTypeSymbol type) =>
+        type.GetAttributes().Any(a => InheritsValidationAttribute(a.AttributeClass))
+        || type.AllInterfaces.Any(i => i.Name == "IValidatableObject")
+        || type.GetMembers().OfType<IPropertySymbol>().SelectMany(p => p.GetAttributes()).Any(a => InheritsValidationAttribute(a.AttributeClass))
+        || type.InstanceConstructors.SelectMany(c => c.Parameters).SelectMany(p => p.GetAttributes()).Any(a => InheritsValidationAttribute(a.AttributeClass));
 
     private static bool InheritsValidationAttribute(INamedTypeSymbol? attributeClass)
     {

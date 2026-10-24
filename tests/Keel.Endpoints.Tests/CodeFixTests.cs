@@ -85,6 +85,18 @@ internal static class CodeFixTests
             Assert.True(fixedSources[0].Contains("[ValidatableType]"));
             Assert.Equal("", remaining);
         });
+        Test("Code fix KEEL007: marks the collection item type [ValidatableType]", async () =>
+        {
+            var (fixedSources, remaining) = await FixAsync(new AddValidatableTypeFix(), "KEEL007", ("Endpoint.cs", Usings + """
+                public sealed record Line([property: Range(1, 10)] int Quantity);
+                [ValidatableType]
+                public sealed record Order(Line[] Lines);
+                [Post("orders")]
+                public sealed class OrderEndpoint : Endpoint<Order> { public override Task HandleAsync(Order r, CancellationToken ct) => Task.CompletedTask; }
+                """));
+            Assert.True(fixedSources[0].Contains("[ValidatableType]\npublic sealed record Line(") || fixedSources[0].Contains("[ValidatableType]\r\npublic sealed record Line("));
+            Assert.Equal("", remaining);
+        });
     }
 
     /// <summary>Applies the first fix offered for <paramref name="id"/>; returns the fixed sources and the

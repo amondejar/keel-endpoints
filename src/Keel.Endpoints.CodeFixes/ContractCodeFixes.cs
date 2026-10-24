@@ -92,11 +92,11 @@ public sealed class BindAsParametersFix : CodeFixProvider
     }
 }
 
-/// <summary>KEEL004: marks the contract <c>[ValidatableType]</c> so .NET 10 validation runs.</summary>
+/// <summary>KEEL004 and KEEL007: marks the contract, or the collection item type, <c>[ValidatableType]</c> so .NET 10 validation runs.</summary>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(AddValidatableTypeFix)), Shared]
 public sealed class AddValidatableTypeFix : CodeFixProvider
 {
-    public override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create("KEEL004");
+    public override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create("KEEL004", "KEEL007");
 
     public override FixAllProvider? GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 
@@ -107,7 +107,7 @@ public sealed class AddValidatableTypeFix : CodeFixProvider
 
         foreach (var diagnostic in context.Diagnostics)
         {
-            // KEEL004 is reported on the contract declaration itself.
+            // KEEL004 and KEEL007 are reported on the type declaration itself.
             var declaration = root.FindToken(diagnostic.Location.SourceSpan.Start).Parent?.AncestorsAndSelf()
                 .OfType<TypeDeclarationSyntax>().FirstOrDefault();
             if (declaration is null) continue;

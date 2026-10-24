@@ -3,7 +3,32 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [1.0.0-preview.6] - Unreleased
+## [1.0.0-rc.1] - 2026-10-24
+
+The release candidate for 1.0.0. No public API changes: every package ships the API of `1.0.0-preview.6`.
+Fixes for what turned up building a complete application on the previews ([keel-shop](https://github.com/amondejar/keel-shop)).
+
+### Added
+- **KEEL007**: an array or collection whose item type has validation rules but no `[ValidatableType]`. The .NET 10
+  validation generator does not discover types reached only as collection items, so those items were silently
+  not validated. The KEEL004 code fix adds the attribute.
+- **Package validation**: `dotnet pack` compares every library package with the last published version
+  (`1.0.0-preview.6` for now) and fails on a binary breaking change.
+- CI builds and tests on Windows as well as Linux; `.gitattributes` keeps LF line endings on every OS.
+- `docs/versioning.md`: one OpenAPI document per version with `Asp.Versioning.OpenApi`
+  (`AddApiVersioning().AddOpenApi()`, `MapOpenApi().WithDocumentPerVersion()`, AV0029 and AV0030).
+
+### Changed
+- **Server-Sent Events send the response headers at once**, before the first event. Clients and tests used to
+  wait, and proxies could time out, until the stream had something to say.
+- A single-operation feature directly in `Features` or in a version folder takes its own name as tag and
+  operation name: `Features.Health.Endpoint` is `Health` (was tag `Features`, operation `FeaturesHealth`). The
+  `keel-api` template's health endpoint is one. Check `api.manifest.json` for an operation rename.
+- Templates and samples reference `Microsoft.AspNetCore.OpenApi` 10.0.10, which brings a patched
+  `Microsoft.OpenApi` (the explicit 2.7.5 pin is gone) and is what `Asp.Versioning.OpenApi` needs.
+- The api-diff action is documented at `@v1`, a tag that follows the latest 1.x release.
+
+## [1.0.0-preview.6] - 2026-10-24
 
 No public API changes in the existing packages.
 
