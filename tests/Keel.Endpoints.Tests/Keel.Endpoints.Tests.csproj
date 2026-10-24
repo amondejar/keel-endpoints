@@ -31,8 +31,10 @@
   <ItemGroup Condition="'$(KeelOfflineRoslyn)' != 'true'">
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
     <!-- Generates the real OpenAPI document in OpenApiDocumentTests (not available offline). -->
-    <!-- 10.0.10 or later: it brings a patched Microsoft.OpenApi, and Asp.Versioning.OpenApi needs it. -->
+    <!-- 10.0.10 or later: what Asp.Versioning.OpenApi needs. -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+    <!-- It still brings Microsoft.OpenApi 2.0.0: pin past GHSA-v5pm-xwqc-g5wc (fixed in 2.7.5). -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
   </ItemGroup>
   <PropertyGroup Condition="'$(KeelOfflineRoslyn)' != 'true'">
     <DefineConstants>$(DefineConstants);KEEL_OPENAPI</DefineConstants>

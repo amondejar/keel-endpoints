@@ -24,8 +24,8 @@ Fixes for what turned up building a complete application on the previews ([keel-
 - A single-operation feature directly in `Features` or in a version folder takes its own name as tag and
   operation name: `Features.Health.Endpoint` is `Health` (was tag `Features`, operation `FeaturesHealth`). The
   `keel-api` template's health endpoint is one. Check `api.manifest.json` for an operation rename.
-- Templates and samples reference `Microsoft.AspNetCore.OpenApi` 10.0.10, which brings a patched
-  `Microsoft.OpenApi` (the explicit 2.7.5 pin is gone) and is what `Asp.Versioning.OpenApi` needs.
+- Templates and samples reference `Microsoft.AspNetCore.OpenApi` 10.0.10, what `Asp.Versioning.OpenApi` needs,
+  and keep pinning `Microsoft.OpenApi` 2.7.5: 10.0.10 still brings the vulnerable 2.0.0.
 - The api-diff action is documented at `@v1`, a tag that follows the latest 1.x release.
 
 ## [1.0.0-preview.6] - 2026-10-24

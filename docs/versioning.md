@@ -83,5 +83,6 @@ app.MapScalarApiReference(o => o.AddDocument("v1").AddDocument("v2"));
 ```
 
 `Asp.Versioning.OpenApi` needs a recent `Microsoft.AspNetCore.OpenApi` (10.0.10 for Asp.Versioning 10.2); reference
-at least that version, or NuGet reports a downgrade (NU1605). [keel-shop](https://github.com/amondejar/keel-shop)
+at least that version, or NuGet reports a downgrade (NU1605). It still brings `Microsoft.OpenApi` 2.0.0, which has a
+known vulnerability (GHSA-v5pm-xwqc-g5wc): reference `Microsoft.OpenApi` 2.7.5 or later as well. [keel-shop](https://github.com/amondejar/keel-shop)
 is a complete application set up this way.
