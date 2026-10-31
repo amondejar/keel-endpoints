@@ -35,7 +35,8 @@ HTTP server Keel uses:
 
 1. The agent calls the tool. The server does not run it: it answers with an **elicitation** (your message and a
    *Confirm* box) and a signed state.
-2. The MCP client shows it to the user (Claude, VS Code and other clients that support elicitation).
+2. The MCP client shows it to the user (Claude Code in a terminal, and other clients that support elicitation; some
+   integrations, such as editor extensions, may answer *decline* without showing it).
 3. The client calls again with the answer and the state. The server checks them, and only then runs the endpoint, with
    its binding, validation and authorization as usual.
 
@@ -45,7 +46,8 @@ The signed state is what makes it trustworthy:
 - **Bound to the call**: the tool name, a hash of its arguments and the user. A confirmation for "refund 10 EUR" does
   not authorize "refund 10 000 EUR", nor the same call by another user.
 - **Short-lived**: `ConfirmationLifetime`, 10 minutes by default.
-- **Strict about the answer**: only *accept* with the box ticked (`confirm: true`) runs the tool.
+- **Accepting confirms**: the *Confirm* box starts ticked, so *accept* runs the tool; unticking it, *decline* and
+  *cancel* do not. A client that cannot show the form must answer *decline* or *cancel*, never *accept*.
 
 Running several instances? Configure a shared Data Protection key ring, as for cookies.
 
@@ -53,7 +55,7 @@ Running several instances? Configure a shared Data Protection key ring, as for c
 
 | Situation | Result |
 | --- | --- |
-| The user declines, cancels, or accepts without ticking the box | `403` tool error, nothing runs |
+| The user declines, dismisses the form, or unticks *Confirm* | `403` tool error saying which, nothing runs |
 | The state is expired, tampered with, or for other arguments or another user | `403` tool error, nothing runs |
 | The client negotiated an older protocol, or does not support elicitation | `403` tool error saying the client cannot ask, nothing runs |
 

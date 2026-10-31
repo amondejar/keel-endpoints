@@ -3,6 +3,13 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **Keel.Endpoints.Agents**: accepting a confirmation now confirms. The *Confirm* box started unticked and had to be
+  ticked as well, so a user who pressed accept (as in Claude Code) got "did not confirm". It now starts ticked; only
+  unticking it, declining or dismissing refuses, and the tool error says which.
+
 ## [1.0.0-rc.4] - 2026-10-31
 
 No changes in the existing packages: one new package.
