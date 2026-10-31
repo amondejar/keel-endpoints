@@ -67,6 +67,37 @@ internal static class ManifestTests
                 changes);
         });
 
+        Test("Manifest diff: MCP tools: gone or renamed is breaking, less confirmation or a new write is security", () =>
+        {
+            var changes = Diff(
+                """
+                {
+                  "GET a": { "responses": { "200": "" }, "tool": { "name": "a_get", "description": "A.", "hints": ["read-only"] } },
+                  "POST b": { "responses": { "200": "" }, "tool": { "name": "b_create", "description": "B.", "hints": ["destructive", "idempotent"] } },
+                  "GET c": { "responses": { "200": "" }, "tool": { "name": "c", "description": "Old.", "hints": ["read-only"] } }
+                }
+                """,
+                "{}",
+                """
+                {
+                  "GET a": { "responses": { "200": "" } },
+                  "POST b": { "responses": { "200": "" }, "tool": { "name": "b_new", "description": "B.", "hints": ["non-destructive"] } },
+                  "GET c": { "responses": { "200": "" }, "tool": { "name": "c", "description": "New.", "hints": ["read-only"] } },
+                  "POST d": { "responses": { "200": "" }, "tool": { "name": "d_create", "description": "D.", "hints": ["non-destructive"] } }
+                }
+                """,
+                "{}");
+            Assert.Equal(
+                "Breaking GET a: no longer an MCP tool (was 'a_get'): agents that use it stop working|" +
+                "Breaking POST b: MCP tool 'b_new' is no longer idempotent: agents must not retry it|" +
+                "Breaking POST b: MCP tool renamed from 'b_create' to 'b_new': agents that use it stop working|" +
+                "Security POST b: MCP tool 'b_new' is no longer marked destructive: agents may call it without asking the user|" +
+                "Security POST d: now the MCP tool 'd_create', which changes data: agents can call it|" +
+                "Compatible GET c: MCP tool 'c' description changed to \"New.\"|" +
+                "Compatible POST d: added",
+                changes);
+        });
+
         Test("Manifest diff: new required request members and parameters are breaking, optional ones are not", () =>
         {
             var changes = Diff(

@@ -19,6 +19,10 @@ dotnet keel diff v1.0.0 v1.1.0 --format markdown --output api-changes.md
 | `--output <file>` | Write the report to a file |
 | `--fail-on` | `breaking`, `security`, `any` or `none` (default) |
 
+Endpoints exposed to AI agents as MCP tools ([Keel.Endpoints.Mcp](https://www.nuget.org/packages/Keel.Endpoints.Mcp))
+are compared as tools too: a tool removed or renamed is breaking, a new tool that changes data or one no longer marked
+destructive is a security change, and a changed description is shown in full.
+
 On pull requests, the [api-diff GitHub Action](https://github.com/amondejar/keel-endpoints/tree/main/actions/api-diff)
 runs it and keeps one comment up to date with the API changes. See the
 [API manifest guide](https://github.com/amondejar/keel-endpoints/blob/main/docs/api-manifest.md).

@@ -9,4 +9,10 @@ public sealed class KeelMcpOptions
     /// either way.
     /// </summary>
     public bool ListAuthorizedToolsOnly { get; set; } = true;
+
+    /// <summary>
+    /// The MCP Server Card to publish at <c>&lt;mcp-url&gt;/server-card</c>, for discovery before connecting. Not
+    /// published by default.
+    /// </summary>
+    public McpServerCard? ServerCard { get; set; }
 }

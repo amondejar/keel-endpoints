@@ -3,6 +3,22 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **MCP tools in the API manifest**: an endpoint with `ExposeAsTool` records its tool (name, description, hints) in
+  `api.manifest.json`, and `ApiManifest.Compare` / `dotnet keel diff` judge it from an agent's side. A tool removed,
+  renamed or no longer idempotent is breaking; a new tool that changes data, or one no longer marked destructive, is
+  a security change; a changed description is listed in full. New `IAgentToolMetadata` (Keel.Endpoints) and
+  `ApiManifestTool` / `ApiManifestEndpoint.Tool` (Keel.Endpoints.Testing). The file format stays 1: older manifests
+  read as before.
+- **MCP Server Card** (`Keel.Endpoints.Mcp`): `KeelMcpOptions.ServerCard` publishes a SEP-2127 card at
+  `<mcp-url>/server-card`, public and cacheable (CORS, `Cache-Control`, `ETag` and `304`), validated at startup; its
+  name and version are also the server info reported at runtime. `PublishAiCatalog` adds
+  `/.well-known/ai-catalog.json`.
+- **`dotnet new keel-api --mcp`**: the todo endpoints as MCP tools at `/mcp`, also with `--aot`. The template smoke
+  test calls the tools on both.
+
 ## [1.0.0-rc.2] - 2026-10-31
 
 No public API changes in the existing packages: one new package.

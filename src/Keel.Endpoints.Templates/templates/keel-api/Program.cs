@@ -1,4 +1,7 @@
 using Keel.Endpoints;
+#if (mcp)
+using Keel.Endpoints.Mcp;
+#endif
 #if (aot)
 using KeelApi;
 #endif
@@ -16,6 +19,11 @@ builder.Services.AddValidation();      // .NET 10 validation for request contrac
 builder.Services.AddProblemDetails();  // RFC 9457 error responses
 builder.Services.AddOpenApi();
 builder.Services.AddSingleton<TodoStore>();
+#if (mcp)
+// AI agents: the endpoints that call ExposeAsTool, as MCP tools. To publish a Server Card for discovery:
+// builder.Services.AddKeelMcp(o => o.ServerCard = new() { Name = "com.example/keelapi", Description = "..." });
+builder.Services.AddKeelMcp();
+#endif
 #if (aot)
 
 // Native AOT has no reflection-based JSON: list every type on the wire in AppJsonContext.
@@ -35,5 +43,10 @@ if (app.Environment.IsDevelopment())
 
 // Generated at compile time: every endpoint class in this project, registered explicitly.
 app.MapKeelEndpoints("/api");
+#if (mcp)
+
+// Streamable HTTP. Try it: claude mcp add --transport http keelapi http://localhost:<port>/mcp
+app.MapKeelMcp("/mcp");
+#endif
 
 app.Run();

@@ -8,7 +8,7 @@
   ],
   "identity": "Keel.Endpoints.Templates.Api",
   "name": "Keel.Endpoints API",
-  "description": "An ASP.NET Core API organized as one class per endpoint, with Keel.Endpoints, .NET 10 validation, OpenAPI and Scalar. Optional Native AOT.",
+  "description": "An ASP.NET Core API organized as one class per endpoint, with Keel.Endpoints, .NET 10 validation, OpenAPI and Scalar. Optional Native AOT and MCP tools for AI agents.",
   "shortName": "keel-api",
   "sourceName": "KeelApi",
   "preferNameDirectory": true,
@@ -22,6 +22,12 @@
       "datatype": "bool",
       "defaultValue": "false",
       "description": "Publish with Native AOT: slim host and a JsonSerializerContext for every wire type."
+    },
+    "mcp": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Offer the todo endpoints to AI agents as MCP tools (Keel.Endpoints.Mcp), at /mcp."
     },
     "skipRestore": {
       "type": "parameter",

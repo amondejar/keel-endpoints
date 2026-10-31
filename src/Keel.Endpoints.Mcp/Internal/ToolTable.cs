@@ -68,7 +68,8 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
         {
             if (endpoint.Metadata.GetMetadata<McpToolMetadata>() is not { } exposed) continue;
             var keel = endpoint.Metadata.GetMetadata<KeelEndpointMetadata>();
-            var method = endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods.FirstOrDefault() ?? "GET";
+            var resolved = endpoint.Metadata.GetMetadata<AgentTool>() ?? AgentTool.Resolve(exposed, endpoint.Metadata);
+            var method = resolved.Method;
             var where = $"{keel?.EndpointType.FullName ?? endpoint.DisplayName} ({method} {endpoint.RoutePattern.RawText})";
             if (keel is null)
             {
@@ -83,7 +84,7 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
                 continue;
             }
 
-            var readOnly = method is "GET" or "HEAD";
+            var readOnly = resolved.ReadOnly;
             if (readOnly && exposed.Options.Destructive is not null)
             {
                 errors.Add($"{where} is read-only ({method}): remove Destructive from its ExposeAsTool options.");
@@ -95,7 +96,7 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
                            "Agents use it to decide what to confirm with the user.");
             }
 
-            var name = exposed.Options.Name ?? ToolNames.SnakeCase(endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()?.EndpointName ?? keel.EndpointType.Name);
+            var name = resolved.Name;
             if (!ToolNames.IsValid(name))
             {
                 errors.Add($"{where}: '{name}' is not a valid MCP tool name (letters, digits, '_', '-' and '.', up to 128 characters).");
@@ -134,7 +135,7 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
                     Title = exposed.Options.Title,
                     ReadOnlyHint = readOnly,
                     DestructiveHint = readOnly ? null : exposed.Options.Destructive,
-                    IdempotentHint = readOnly ? null : exposed.Options.Idempotent ?? method is "PUT" or "DELETE",
+                    IdempotentHint = readOnly ? null : resolved.Idempotent,
                     OpenWorldHint = exposed.Options.OpenWorld,
                 },
             };

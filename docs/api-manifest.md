@@ -70,6 +70,28 @@ what it reads may gain members, never lose or change them.
 | Response type changed (`int64` to `int32` is fine, the reverse is not) | | New status code documented, non-2xx removed |
 | A 2xx status removed, a body removed, JSON switched to another media type | | Operation name changed (generated clients may rename methods) |
 
+### MCP tools
+
+An endpoint exposed with `ExposeAsTool` (Keel.Endpoints.Mcp) also records its tool:
+
+```json
+"POST api/invoices": {
+  "authorization": "required",
+  "body": "CreateInvoice (required)",
+  "responses": { "201": "InvoiceView" },
+  "tool": { "name": "invoices_create", "description": "Creates an invoice for a customer.", "hints": ["non-destructive"] }
+}
+```
+
+The tool's input and output are the endpoint's parameters, body and responses, so the rules above already cover
+them. On top, from the side of an agent that uses the tool:
+
+| Breaking | Security | Compatible |
+| --- | --- | --- |
+| No longer a tool, or renamed (the name is how agents call it) | A new tool that changes data | A new read-only tool |
+| No longer idempotent (agents may retry it) | No longer marked destructive (agents stop asking the user) | Now destructive, now idempotent, open-world changed |
+| | | Description changed (shown in full: it is what the agent reads) |
+
 `ApiManifest.Compare(baseline, current)` returns the same list as `ApiChange` records, for a custom policy.
 
 ## Comparing versions

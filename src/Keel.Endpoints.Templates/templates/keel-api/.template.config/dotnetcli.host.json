@@ -8,6 +8,10 @@
     "aot": {
       "longName": "aot",
       "shortName": ""
+    },
+    "mcp": {
+      "longName": "mcp",
+      "shortName": ""
     }
   }
 }

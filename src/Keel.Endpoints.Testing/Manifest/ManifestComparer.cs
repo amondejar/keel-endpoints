@@ -51,6 +51,7 @@ internal sealed partial class ManifestComparer(ApiManifest baseline, ApiManifest
         {
             _endpoint = key;
             Add(ApiChangeKind.Compatible, "added");
+            CompareTool(null, current.Endpoints[key].Tool);
         }
 
         return [.. _changes
@@ -88,6 +89,53 @@ internal sealed partial class ManifestComparer(ApiManifest baseline, ApiManifest
         CompareParameters("form field", old.Form, now.Form);
         CompareBody(old.Body, now.Body);
         CompareResponses(old.Responses, now.Responses);
+        CompareTool(old.Tool, now.Tool);
+    }
+
+    /// <summary>
+    /// The endpoint as an MCP tool, from the point of view of an agent that uses it: its name is its address, and its
+    /// hints decide what the agent asks the user to confirm and whether it retries.
+    /// </summary>
+    private void CompareTool(ApiManifestTool? old, ApiManifestTool? now)
+    {
+        if (old is null && now is null) return;
+        if (old is null)
+        {
+            var changesData = !now!.Hints.Contains("read-only");
+            Add(changesData ? ApiChangeKind.Security : ApiChangeKind.Compatible, changesData
+                ? $"now the MCP tool '{now.Name}', which changes data: agents can call it"
+                : $"now the MCP tool '{now.Name}'");
+            return;
+        }
+
+        if (now is null)
+        {
+            Add(ApiChangeKind.Breaking, $"no longer an MCP tool (was '{old.Name}'): agents that use it stop working");
+            return;
+        }
+
+        if (old.Name != now.Name)
+            Add(ApiChangeKind.Breaking, $"MCP tool renamed from '{old.Name}' to '{now.Name}': agents that use it stop working");
+
+        var tool = $"MCP tool '{now.Name}'";
+        var before = old.Hints;
+        var after = now.Hints;
+        bool Had(string hint) => before.Contains(hint);
+        bool Has(string hint) => after.Contains(hint);
+        var writes = !Has("read-only");
+
+        if (writes && Had("destructive") && !Has("destructive"))
+            Add(ApiChangeKind.Security, $"{tool} is no longer marked destructive: agents may call it without asking the user");
+        if (!Had("destructive") && Has("destructive"))
+            Add(ApiChangeKind.Compatible, $"{tool} is now marked destructive");
+        if (writes && Had("idempotent") && !Has("idempotent"))
+            Add(ApiChangeKind.Breaking, $"{tool} is no longer idempotent: agents must not retry it");
+        if (!Had("idempotent") && Has("idempotent"))
+            Add(ApiChangeKind.Compatible, $"{tool} is now idempotent");
+        if (Had("open-world") != Has("open-world"))
+            Add(ApiChangeKind.Compatible, Has("open-world") ? $"{tool} now reaches beyond this API (open world)" : $"{tool} no longer reaches beyond this API");
+        if (old.Description != now.Description)
+            Add(ApiChangeKind.Compatible, $"{tool} description changed to \"{now.Description}\"");
     }
 
     private void CompareAuthorization(ApiManifestEndpoint old, ApiManifestEndpoint now)

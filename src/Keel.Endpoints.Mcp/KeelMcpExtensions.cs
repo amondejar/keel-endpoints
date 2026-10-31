@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
+using ModelContextProtocol.Server;
 
 namespace Keel.Endpoints.Mcp;
 
@@ -28,6 +30,7 @@ public static class KeelMcpExtensions
         // Builds the tool table once the request pipeline (and so the endpoint table) is built, so a misconfigured
         // tool stops the host at startup instead of failing its first call.
         services.AddTransient<IStartupFilter, ToolTableVerifier>();
+        services.AddSingleton<IPostConfigureOptions<McpServerOptions>, ServerInfoFromCard>();
 
         return services.AddMcpServer()
             .WithHttpTransport()
@@ -37,12 +40,20 @@ public static class KeelMcpExtensions
 
     /// <summary>
     /// Maps the MCP endpoint (default <c>/mcp</c>). Each tool call is authorized with its own endpoint's policies, so the
-    /// MCP endpoint itself can stay open; require authorization on it too if no anonymous caller should reach it.
+    /// MCP endpoint itself can stay open; require authorization on it too if no anonymous caller should reach it. With
+    /// <see cref="KeelMcpOptions.ServerCard"/> set, also maps the public Server Card at <c>{pattern}/server-card</c>
+    /// (and the AI Catalog if asked); the returned builder is the MCP endpoint's only, so the card stays public.
     /// </summary>
     public static IEndpointConventionBuilder MapKeelMcp(this IEndpointRouteBuilder app, string pattern = "/mcp")
     {
         ArgumentNullException.ThrowIfNull(app);
-        return app.MapMcp(pattern);
+        var mcp = app.MapMcp(pattern);
+        if (app.ServiceProvider.GetRequiredService<IOptions<KeelMcpOptions>>().Value.ServerCard is { } card)
+        {
+            ServerCards.Map(app, pattern, card);
+        }
+
+        return mcp;
     }
 
     private static ToolInvoker Invoker(IServiceProvider? services) =>

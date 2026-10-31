@@ -10,6 +10,11 @@ public sealed record GetTodo(int Id);
 [Get("todos/{id}")]
 public sealed class Endpoint(TodoStore store) : ResultEndpoint<GetTodo, Results<Ok<Todo>, NotFound>>
 {
+#if (mcp)
+    public override void Configure(EndpointOptions options) =>
+        options.ExposeAsTool("Gets a todo by its id.");
+
+#endif
     public override Task<Results<Ok<Todo>, NotFound>> HandleAsync(GetTodo request, CancellationToken ct) =>
         Task.FromResult<Results<Ok<Todo>, NotFound>>(
             store.Find(request.Id) is { } todo ? TypedResults.Ok(todo) : TypedResults.NotFound());
