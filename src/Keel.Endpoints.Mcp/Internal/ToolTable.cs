@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Routing;
@@ -35,24 +36,35 @@ internal sealed class McpTool
 internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<JsonOptions> json)
 {
     private readonly Lock _gate = new();
-    private IReadOnlyDictionary<string, McpTool>? _tools;
+    private (IReadOnlyList<Endpoint> Source, IReadOnlyDictionary<string, McpTool> Tools)? _built;
 
+    /// <summary>
+    /// The tools of the current endpoint table, rebuilt when the table changes: the application's endpoints only reach
+    /// the global data source when the request pipeline is built, after hosted services have started.
+    /// </summary>
     public IReadOnlyDictionary<string, McpTool> Tools
     {
         get
         {
-            if (_tools is { } built) return built;
-            lock (_gate) return _tools ??= Build();
+            var endpoints = dataSource.Endpoints;
+            if (_built is { } built && ReferenceEquals(built.Source, endpoints)) return built.Tools;
+            lock (_gate)
+            {
+                if (_built is { } again && ReferenceEquals(again.Source, endpoints)) return again.Tools;
+                var tools = Build(endpoints);
+                _built = (endpoints, tools);
+                return tools;
+            }
         }
     }
 
-    private Dictionary<string, McpTool> Build()
+    private Dictionary<string, McpTool> Build(IReadOnlyList<Endpoint> endpoints)
     {
         var options = json.Value.SerializerOptions;
         var tools = new Dictionary<string, McpTool>(StringComparer.Ordinal);
         var errors = new List<string>();
 
-        foreach (var endpoint in dataSource.Endpoints.OfType<RouteEndpoint>())
+        foreach (var endpoint in endpoints.OfType<RouteEndpoint>())
         {
             if (endpoint.Metadata.GetMetadata<McpToolMetadata>() is not { } exposed) continue;
             var keel = endpoint.Metadata.GetMetadata<KeelEndpointMetadata>();

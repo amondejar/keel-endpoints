@@ -15,16 +15,6 @@ internal static class McpTests
 {
     public static void Register()
     {
-        Test("MCP: DIAGNOSTIC (temporary)", async () =>
-        {
-            await using var app = await StartAsync();
-            var source = app.Services.GetRequiredService<EndpointDataSource>();
-            var lines = source.Endpoints.OfType<RouteEndpoint>().Select(e =>
-                $"{e.RoutePattern.RawText} [{string.Join(",", e.Metadata.Select(m => m.GetType().Name).Distinct().Where(n => n.Contains("Mcp") || n.Contains("Keel")))}]");
-            var table = app.Services.GetRequiredService<ToolTable>();
-            throw new AssertionException($"endpoints={source.Endpoints.Count} tools={table.Tools.Count} :: {string.Join(" | ", lines)}");
-        });
-
         Test("MCP: only endpoints with ExposeAsTool are tools, named after the operation", async () =>
         {
             await using var app = await StartAsync();

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Hosting;
 
 namespace Keel.Endpoints.Mcp;
 
@@ -25,8 +25,9 @@ public static class KeelMcpExtensions
         services.AddAuthorization();
         services.TryAddSingleton<ToolTable>();
         services.TryAddSingleton<ToolInvoker>();
-        // Builds the tool table at startup, so a misconfigured tool stops the host instead of failing its first call.
-        services.AddHostedService<ToolTableVerifier>();
+        // Builds the tool table once the request pipeline (and so the endpoint table) is built, so a misconfigured
+        // tool stops the host at startup instead of failing its first call.
+        services.AddTransient<IStartupFilter, ToolTableVerifier>();
 
         return services.AddMcpServer()
             .WithHttpTransport()
@@ -48,13 +49,11 @@ public static class KeelMcpExtensions
         (services ?? throw new InvalidOperationException("The MCP request has no services.")).GetRequiredService<ToolInvoker>();
 }
 
-internal sealed class ToolTableVerifier(ToolTable table) : IHostedService
+internal sealed class ToolTableVerifier(ToolTable table) : IStartupFilter
 {
-    public Task StartAsync(CancellationToken cancellationToken)
+    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
     {
+        next(app);
         _ = table.Tools;
-        return Task.CompletedTask;
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+    };
 }
