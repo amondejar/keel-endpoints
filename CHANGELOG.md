@@ -3,7 +3,9 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0-rc.4] - 2026-10-31
+
+No changes in the existing packages: one new package.
 
 ### Added
 - **`Keel.Endpoints.Agents`** (new, preview): safe actions for AI agents on Keel MCP tools. `AddKeelAgents()` makes
