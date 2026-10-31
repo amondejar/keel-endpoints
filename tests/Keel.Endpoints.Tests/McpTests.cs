@@ -114,7 +114,7 @@ internal static class McpTests
             Assert.Equal(true, missing.IsError);
             Assert.True(Text(missing).StartsWith("404", StringComparison.Ordinal));
             Assert.Equal(true, invalid.IsError);
-            Assert.True(Text(invalid).StartsWith("400", StringComparison.Ordinal) && Text(invalid).Contains("Amount", StringComparison.OrdinalIgnoreCase));
+            Assert.True(Text(invalid).StartsWith("400", StringComparison.Ordinal) && Text(invalid).Contains("Amount", StringComparison.OrdinalIgnoreCase), Text(invalid));
             Assert.Equal(2, app.Services.GetRequiredService<InvoiceStore>().All.Count);
         });
 
@@ -133,7 +133,7 @@ internal static class McpTests
             var store = app.Services.GetRequiredService<InvoiceStore>();
             Assert.True(Text(unauthenticated).StartsWith("401", StringComparison.Ordinal));
             Assert.True(Text(forbidden).StartsWith("403", StringComparison.Ordinal));
-            Assert.True(created.IsError is null or false);
+            Assert.True(created.IsError is null or false, Text(created));
             Assert.Equal("Initech", created.StructuredContent!.Value.GetProperty("customer").GetString());
             Assert.True(deleted.IsError is null or false && Text(deleted).StartsWith("204", StringComparison.Ordinal));
             Assert.True(store.Find(1) is not null && store.Find(2) is null && store.All.Any(i => i.Customer == "Initech"));
