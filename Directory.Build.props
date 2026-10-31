@@ -10,7 +10,7 @@
     <!-- Package metadata shared by every packable project -->
     <!-- The version being prepared; releases set it from the tag. Package validation needs it above the baseline. -->
     <VersionPrefix>1.0.0</VersionPrefix>
-    <VersionSuffix>rc.2</VersionSuffix>
+    <VersionSuffix>rc.3</VersionSuffix>
     <Authors>Keel.Endpoints contributors</Authors>
     <Copyright>Copyright (c) Keel.Endpoints contributors</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
