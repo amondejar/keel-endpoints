@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0-rc.5] - 2026-10-31
 
 ### Fixed
 - **Keel.Endpoints.Agents**: accepting a confirmation now confirms. The *Confirm* box started unticked and had to be
