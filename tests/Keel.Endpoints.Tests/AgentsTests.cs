@@ -37,9 +37,14 @@ internal static class AgentsTests
             Assert.Equal(audit[0].ArgumentsHash, audit[1].ArgumentsHash);
         });
 
-        Test("Agents: declined, cancelled or not ticked, the tool does not run", async () =>
+        Test("Agents: declined, dismissed or unticked, the tool does not run, and the agent is told which", async () =>
         {
-            foreach (var (action, confirm) in new[] { ("decline", (bool?)null), ("cancel", null), ("accept", false), ("accept", null) })
+            foreach (var (action, confirm, said) in new[]
+            {
+                ("decline", (bool?)null, "user declined"),
+                ("cancel", null, "dismissed"),
+                ("accept", false, "unticked Confirm"),
+            })
             {
                 await using var app = await StartAsync();
                 await using var client = await Client(app, _ => Answer(action, confirm));
@@ -47,9 +52,30 @@ internal static class AgentsTests
                 var result = await client.CallToolAsync("payments_refund", new Dictionary<string, object?> { ["id"] = 7, ["amount"] = 12.5 });
 
                 Assert.Equal(true, result.IsError);
-                Assert.True(Text(result).Contains("did not confirm"), $"{action}/{confirm}: {Text(result)}");
+                Assert.True(Text(result).Contains(said), $"{action}/{confirm}: {Text(result)}");
                 Assert.Equal(0, Ledger(app).Actions.Count);
                 Assert.Equal(AgentDecision.Declined, Audit(app)[^1].Decision);
+            }
+        });
+
+        Test("Agents: accepting confirms; the Confirm box starts ticked", async () =>
+        {
+            foreach (var confirm in new bool?[] { true, null })
+            {
+                await using var app = await StartAsync();
+                ElicitRequestParams? asked = null;
+                await using var client = await Client(app, request =>
+                {
+                    asked = request;
+                    return Answer("accept", confirm);
+                });
+
+                var result = await client.CallToolAsync("payments_refund", new Dictionary<string, object?> { ["id"] = 7, ["amount"] = 12.5 });
+
+                Assert.True(result.IsError is null or false, $"{confirm}: {Text(result)}");
+                Assert.Equal("refund 7 12.5", string.Join("|", Ledger(app).Actions));
+                var box = (ElicitRequestParams.BooleanSchema)asked!.RequestedSchema!.Properties["confirm"];
+                Assert.Equal(true, box.Default);
             }
         });
 

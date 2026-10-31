@@ -57,7 +57,8 @@ internal sealed partial class ConfirmationFilter(
                 }
 
                 var answer = response.Deserialize(InputResponse.ElicitResultJsonTypeInfo);
-                if (Accepted(answer))
+                var refusal = Refusal(answer);
+                if (refusal is null)
                 {
                     var result = await next(context, cancellationToken);
                     await Audit(name, user, AgentDecision.Confirmed, summary, hash, Succeeded(result), cancellationToken);
@@ -65,7 +66,7 @@ internal sealed partial class ConfirmationFilter(
                 }
 
                 await Audit(name, user, AgentDecision.Declined, summary, hash, null, cancellationToken);
-                return Error("The user did not confirm. Nothing was done.");
+                return Error(refusal);
             }
 
             if (!context.Server.IsMrtrSupported || context.Server.ClientCapabilities is { Elicitation: null })
@@ -88,8 +89,8 @@ internal sealed partial class ConfirmationFilter(
                                 [ConfirmField] = new ElicitRequestParams.BooleanSchema
                                 {
                                     Title = "Confirm",
-                                    Description = "Do it: the agent asked to " + tool.Name + ".",
-                                    Default = false,
+                                    Description = "Accept to do it. Untick to cancel.",
+                                    Default = true,
                                 },
                             },
                             Required = [ConfirmField],
@@ -99,11 +100,24 @@ internal sealed partial class ConfirmationFilter(
                 requestState: tokens.Create(name, hash, user));
         };
 
-    /// <summary>Accepted, and the box ticked: a client that only shows accept/decline must still send <c>confirm: true</c>.</summary>
-    private static bool Accepted(ElicitResult? answer) =>
-        answer is { Action: "accept", Content: { } content }
-        && content.TryGetValue(ConfirmField, out var confirm)
-        && confirm.ValueKind == JsonValueKind.True;
+    /// <summary>
+    /// Why the answer is not a confirmation, or <see langword="null"/> when it is. Accepting confirms: the box starts
+    /// ticked, so only a user who unticks it on purpose cancels. Declining, dismissing, or a client that answers without
+    /// asking (it must say <c>decline</c> or <c>cancel</c>) never confirms.
+    /// </summary>
+    internal static string? Refusal(ElicitResult? answer)
+    {
+        const string Dismissed = "The confirmation was dismissed without an answer (or the client could not show it). Nothing was done.";
+        if (answer is null) return Dismissed;
+        var unticked = answer.Content is { } content && content.TryGetValue(ConfirmField, out var confirm) && confirm.ValueKind == JsonValueKind.False;
+        return answer.Action switch
+        {
+            "accept" when unticked => "The user accepted but unticked Confirm, so nothing was done. Ask the user before trying again.",
+            "accept" => null,
+            "decline" => "The user declined. Nothing was done; do not try again unless the user asks.",
+            _ => Dismissed,
+        };
+    }
 
     private string Message(ConfirmationMetadata? confirmation, IAgentToolMetadata tool, IDictionary<string, JsonElement>? arguments)
     {
