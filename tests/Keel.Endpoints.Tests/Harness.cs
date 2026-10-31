@@ -27,12 +27,17 @@ internal static class Harness
             {
                 failed++;
                 Console.WriteLine($"  FAIL  {name}\n        {ex.GetType().Name}: {ex.Message}");
+                // On GitHub Actions a failed test is also an annotation, shown on the pull request.
+                if (Environment.GetEnvironmentVariable("GITHUB_ACTIONS") == "true")
+                    Console.WriteLine($"::error title=FAIL {Escape(name)}::{Escape($"{ex.GetType().Name}: {ex.Message}")}");
             }
         }
 
         Console.WriteLine($"\n{Tests.Count - failed} passed, {failed} failed ({clock.ElapsedMilliseconds} ms)");
         return failed == 0 ? 0 : 1;
     }
+
+    private static string Escape(string text) => text.Replace("%", "%25").Replace("\r", "%0D").Replace("\n", "%0A");
 }
 
 internal static class Assert

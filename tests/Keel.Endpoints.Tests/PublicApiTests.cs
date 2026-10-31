@@ -21,6 +21,7 @@ internal static class PublicApiTests
         Check(typeof(Telemetry.KeelTelemetry).Assembly, "src/Keel.Endpoints.OpenTelemetry/PublicAPI.txt");
         Check(typeof(Idempotency.KeelIdempotencyExtensions).Assembly, "src/Keel.Endpoints.Idempotency/PublicAPI.txt");
         Check(typeof(Versioning.KeelVersioningExtensions).Assembly, "src/Keel.Endpoints.Versioning/PublicAPI.txt");
+        Check(typeof(Mcp.KeelMcpExtensions).Assembly, "src/Keel.Endpoints.Mcp/PublicAPI.txt");
     }
 
     private static void Check(Assembly assembly, string relativePath) =>
