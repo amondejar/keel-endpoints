@@ -294,6 +294,18 @@ The API manifest records each tool, so `dotnet keel diff` flags a renamed tool o
 confirmation; an optional MCP Server Card (`/mcp/server-card`) makes the server discoverable. See
 [docs/mcp.md](docs/mcp.md).
 
+`Keel.Endpoints.Agents` adds the safeguards: the server asks the user to confirm before a destructive tool runs (MCP
+elicitation, with a signed confirmation bound to the call), refuses when it cannot ask, and audits every write an agent
+makes.
+
+```csharp
+builder.Services.AddKeelAgents();
+options.ExposeAsTool("Refunds a payment.", tool => tool.Destructive = false)
+       .RequireConfirmation<RefundPayment>(r => $"Refund payment {r.Id}: {r.Amount} EUR");
+```
+
+See [docs/agents.md](docs/agents.md).
+
 ## Observability
 
 `Keel.Endpoints.OpenTelemetry` tags ASP.NET Core's request spans and `http.server.request.duration` with

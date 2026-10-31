@@ -1,0 +1,34 @@
+Keel.Endpoints.Agents.AgentDecision.ConfirmationRequested
+Keel.Endpoints.Agents.AgentDecision.Confirmed
+Keel.Endpoints.Agents.AgentDecision.Declined
+Keel.Endpoints.Agents.AgentDecision.NotRequired
+Keel.Endpoints.Agents.AgentDecision.Refused
+enum Keel.Endpoints.Agents.AgentDecision
+interface Keel.Endpoints.Agents.IAgentAuditSink
+public Keel.Endpoints.Agents.AgentAuditEntry(System.DateTimeOffset Time, string Tool, string? User, Keel.Endpoints.Agents.AgentDecision Decision, string? Summary, string ArgumentsHash, bool? Succeeded)
+public Keel.Endpoints.Agents.AgentDecision Keel.Endpoints.Agents.AgentAuditEntry.Decision { get; init; }
+public Keel.Endpoints.Agents.KeelAgentsOptions()
+public System.DateTimeOffset Keel.Endpoints.Agents.AgentAuditEntry.Time { get; init; }
+public System.TimeSpan Keel.Endpoints.Agents.KeelAgentsOptions.ConfirmationLifetime { get; set; }
+public abstract System.Threading.Tasks.ValueTask Keel.Endpoints.Agents.IAgentAuditSink.WriteAsync(Keel.Endpoints.Agents.AgentAuditEntry entry, System.Threading.CancellationToken cancellationToken)
+public bool Keel.Endpoints.Agents.AgentAuditEntry.Equals(Keel.Endpoints.Agents.AgentAuditEntry? other)
+public bool Keel.Endpoints.Agents.KeelAgentsOptions.ConfirmDestructiveTools { get; set; }
+public bool? Keel.Endpoints.Agents.AgentAuditEntry.Succeeded { get; init; }
+public override bool Keel.Endpoints.Agents.AgentAuditEntry.Equals(object? obj)
+public override int Keel.Endpoints.Agents.AgentAuditEntry.GetHashCode()
+public override string Keel.Endpoints.Agents.AgentAuditEntry.ToString()
+public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.RequireConfirmation(this Keel.Endpoints.EndpointOptions options, string message)
+public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.RequireConfirmation<TRequest>(this Keel.Endpoints.EndpointOptions options, System.Func<TRequest, string> message)
+public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.WithoutConfirmation(this Keel.Endpoints.EndpointOptions options)
+public static Microsoft.Extensions.DependencyInjection.IServiceCollection Keel.Endpoints.Agents.KeelAgentsExtensions.AddKeelAgents(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<Keel.Endpoints.Agents.KeelAgentsOptions>? configure = null)
+public static bool Keel.Endpoints.Agents.AgentAuditEntry.op_Equality(Keel.Endpoints.Agents.AgentAuditEntry? left, Keel.Endpoints.Agents.AgentAuditEntry? right)
+public static bool Keel.Endpoints.Agents.AgentAuditEntry.op_Inequality(Keel.Endpoints.Agents.AgentAuditEntry? left, Keel.Endpoints.Agents.AgentAuditEntry? right)
+public string Keel.Endpoints.Agents.AgentAuditEntry.ArgumentsHash { get; init; }
+public string Keel.Endpoints.Agents.AgentAuditEntry.Tool { get; init; }
+public string? Keel.Endpoints.Agents.AgentAuditEntry.Summary { get; init; }
+public string? Keel.Endpoints.Agents.AgentAuditEntry.User { get; init; }
+public void Keel.Endpoints.Agents.AgentAuditEntry.Deconstruct(out System.DateTimeOffset Time, out string Tool, out string? User, out Keel.Endpoints.Agents.AgentDecision Decision, out string? Summary, out string ArgumentsHash, out bool? Succeeded)
+sealed class Keel.Endpoints.Agents.AgentAuditEntry : System.IEquatable<Keel.Endpoints.Agents.AgentAuditEntry>
+sealed class Keel.Endpoints.Agents.KeelAgentsOptions
+static class Keel.Endpoints.AgentEndpointOptionsExtensions
+static class Keel.Endpoints.Agents.KeelAgentsExtensions
