@@ -3,7 +3,10 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0-rc.3] - 2026-10-31
+
+Additive only: new members in `Keel.Endpoints`, `Keel.Endpoints.Testing` and `Keel.Endpoints.Mcp`, nothing removed or
+changed.
 
 ### Added
 - **MCP tools in the API manifest**: an endpoint with `ExposeAsTool` records its tool (name, description, hints) in
