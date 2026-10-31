@@ -5,6 +5,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
@@ -168,6 +169,13 @@ internal sealed class ToolInvoker(ToolTable table, IOptions<KeelMcpOptions> opti
         request.ContentType = "application/json";
         request.ContentLength = bytes.Length;
         request.Body = new MemoryStream(bytes);
+        // Minimal APIs read a body only when the server says the request can have one, as Kestrel does.
+        request.HttpContext.Features.Set<IHttpRequestBodyDetectionFeature>(new HasBody());
+    }
+
+    private sealed class HasBody : IHttpRequestBodyDetectionFeature
+    {
+        public bool CanHaveBody => true;
     }
 
     private static CallToolResult Result(McpTool tool, HttpContext context)
