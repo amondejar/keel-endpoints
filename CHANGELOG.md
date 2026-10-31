@@ -3,7 +3,9 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0-rc.2] - 2026-10-31
+
+No public API changes in the existing packages: one new package.
 
 ### Added
 - **`Keel.Endpoints.Mcp`** (new, preview): endpoints as MCP tools for AI agents, on the official MCP C# SDK
