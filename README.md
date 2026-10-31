@@ -278,6 +278,20 @@ public override void Configure(EndpointOptions options) => options.Idempotent();
 
 See [docs/idempotency.md](docs/idempotency.md).
 
+## MCP tools for AI agents
+
+`Keel.Endpoints.Mcp` offers endpoints to AI agents as [MCP](https://modelcontextprotocol.io) tools, on the official
+MCP C# SDK. The contract is the tool's schema; a call runs the endpoint in process, with its validation and
+authorization, as the calling user. Writes must say whether they are destructive.
+
+```csharp
+builder.Services.AddKeelMcp();
+app.MapKeelMcp("/mcp");
+public override void Configure(EndpointOptions options) => options.ExposeAsTool("Gets an invoice by its number.");
+```
+
+See [docs/mcp.md](docs/mcp.md).
+
 ## Observability
 
 `Keel.Endpoints.OpenTelemetry` tags ASP.NET Core's request spans and `http.server.request.duration` with

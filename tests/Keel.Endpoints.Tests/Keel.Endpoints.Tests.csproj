@@ -17,6 +17,7 @@
     <ProjectReference Include="..\..\src\Keel.Endpoints.OpenTelemetry\Keel.Endpoints.OpenTelemetry.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.Tool\Keel.Endpoints.Tool.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.Idempotency\Keel.Endpoints.Idempotency.csproj" />
+    <ProjectReference Include="..\..\src\Keel.Endpoints.Mcp\Keel.Endpoints.Mcp.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.Versioning\Keel.Endpoints.Versioning.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.Analyzers\Keel.Endpoints.Analyzers.csproj" />
     <ProjectReference Include="..\..\src\Keel.Endpoints.CodeFixes\Keel.Endpoints.CodeFixes.csproj" />

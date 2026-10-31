@@ -3,6 +3,18 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`Keel.Endpoints.Mcp`** (new, preview): endpoints as MCP tools for AI agents, on the official MCP C# SDK
+  (`ModelContextProtocol.AspNetCore` 2.3). `AddKeelMcp()` and `MapKeelMcp()` serve Streamable HTTP (stateless);
+  `options.ExposeAsTool(description)` opts an endpoint in. The input schema is the request contract with its
+  DataAnnotations rules, the output schema the response type; hints come from the method, and endpoints that change
+  data must say whether they are destructive or the host does not start. A call runs the endpoint's request delegate
+  in process (binding, validation, filters, ProblemDetails) after its own authorization policies, with the MCP
+  request's identity; callers are only shown the tools they may call.
+- `docs/mcp.md`.
+
 ## [1.0.0-rc.1] - 2026-10-24
 
 The release candidate for 1.0.0. No public API changes: every package ships the API of `1.0.0-preview.6`.
