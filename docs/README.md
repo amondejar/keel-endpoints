@@ -11,6 +11,7 @@
 | [Versioning](versioning.md) | A version per folder with Asp.Versioning, unique operation names per version |
 | [Idempotency](idempotency.md) | Safe retries for POST and PATCH with an `Idempotency-Key` header |
 | [MCP tools](mcp.md) | Endpoints as MCP tools for AI agents: schemas, hints, authorization, how a call runs |
+| [Safe actions for agents](agents.md) | The user confirms before a destructive tool runs (MCP elicitation), and every write is audited |
 | [Observability](observability.md) | Operation and feature on traces and metrics, validation errors per field, handler timing |
 | [Testing](testing.md) | Typed calls with `EndpointClient`, the API manifest, the public API files |
 | [API manifest](api-manifest.md) | `api.manifest.json`, what counts as a breaking change, `dotnet keel diff` and the pull request action |

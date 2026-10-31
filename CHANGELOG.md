@@ -3,6 +3,18 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`Keel.Endpoints.Agents`** (new, preview): safe actions for AI agents on Keel MCP tools. `AddKeelAgents()` makes
+  every destructive tool, and every endpoint with `RequireConfirmation(...)`, ask the user before running: the server
+  answers the first call with an MCP elicitation (multi round-trip request, protocol `2026-07-28`, stateless) and runs
+  the endpoint only on a confirmed retry. The pending confirmation is signed with Data Protection, expires, and is bound
+  to the tool, a hash of its arguments and the user. Fail-closed when the user declines or the client cannot ask.
+  `WithoutConfirmation()` opts out. Every agent call that changes data is audited through `IAgentAuditSink` (the log
+  by default).
+- `docs/agents.md`.
+
 ## [1.0.0-rc.3] - 2026-10-31
 
 Additive only: new members in `Keel.Endpoints`, `Keel.Endpoints.Testing` and `Keel.Endpoints.Mcp`, nothing removed or

@@ -8,6 +8,7 @@ GroupTests.Register();
 TelemetryTests.Register();
 IdempotencyTests.Register();
 McpTests.Register();
+AgentsTests.Register();
 VersioningTests.Register();
 OpenApiTests.Register();
 #if KEEL_OPENAPI

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <PackageId>Keel.Endpoints.Agents</PackageId>
+    <Description>Safe actions for AI agents on Keel.Endpoints MCP tools: the server asks the user to confirm before a destructive or sensitive tool runs (MCP elicitation, stateless), with a signed confirmation bound to the tool, its arguments and the user, and an audit trail of every write an agent makes. Fail-closed: no confirmation, no action.</Description>
+    <PackageTags>$(PackageTags);mcp;ai-agents;human-in-the-loop;approvals;audit</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- New package: there is no published version to compare with yet (Directory.Build.targets). -->
+    <KeelPackageValidation>false</KeelPackageValidation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Keel.Endpoints.Mcp\Keel.Endpoints.Mcp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <InternalsVisibleTo Include="Keel.Endpoints.Tests" />
+  </ItemGroup>
+
+</Project>
