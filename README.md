@@ -44,7 +44,7 @@ Or start from a template:
 
 ```bash
 dotnet new install Keel.Endpoints.Templates
-dotnet new keel-api -n Shop            # add --aot for Native AOT
+dotnet new keel-api -n Shop            # add --aot for Native AOT, --mcp for MCP tools
 cd Shop && dotnet new keel-slice -n Rename --feature Todos --method put
 ```
 
@@ -206,7 +206,7 @@ add the missing contract member, bind the contract from parameters with
 
 | Template | Creates |
 | --- | --- |
-| `keel-api` | An API with a sample feature, validation, ProblemDetails, OpenAPI and Scalar (`/scalar` in Development). `--aot` adds Native AOT: slim host and a `JsonSerializerContext`. |
+| `keel-api` | An API with a sample feature, validation, ProblemDetails, OpenAPI and Scalar (`/scalar` in Development). `--aot` adds Native AOT: slim host and a `JsonSerializerContext`. `--mcp` offers the todo endpoints to AI agents as MCP tools at `/mcp`. |
 | `keel-slice` | One operation as `Features/<Feature>/<Name>/Endpoint.cs` with its contract. Options: `--feature` (required), `--method get\|post\|put\|patch\|delete`, `--route`, `--folder`. |
 
 A new slice starts fail-closed: the app will not start until you decide who may call it (on the class, in
@@ -290,7 +290,9 @@ app.MapKeelMcp("/mcp");
 public override void Configure(EndpointOptions options) => options.ExposeAsTool("Gets an invoice by its number.");
 ```
 
-See [docs/mcp.md](docs/mcp.md).
+The API manifest records each tool, so `dotnet keel diff` flags a renamed tool or a write that stopped asking for
+confirmation; an optional MCP Server Card (`/mcp/server-card`) makes the server discoverable. See
+[docs/mcp.md](docs/mcp.md).
 
 ## Observability
 

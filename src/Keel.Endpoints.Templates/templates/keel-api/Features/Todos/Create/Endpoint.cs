@@ -13,6 +13,12 @@ public sealed record CreateTodo([property: Required, StringLength(100)] string T
 [Post("todos")]
 public sealed class Endpoint(TodoStore store) : ResultEndpoint<CreateTodo, Created<Todo>>
 {
+#if (mcp)
+    // Writes must say whether they are destructive: this one only adds.
+    public override void Configure(EndpointOptions options) =>
+        options.ExposeAsTool("Creates a todo with a title.", tool => tool.Destructive = false);
+
+#endif
     public override Task<Created<Todo>> HandleAsync(CreateTodo request, CancellationToken ct)
     {
         var todo = store.Add(request.Title);

@@ -164,10 +164,30 @@ public sealed class ApiManifestEndpoint
     /// <summary>Documented responses keyed by status code; the value is empty when there is no body.</summary>
     public IReadOnlyDictionary<string, string> Responses { get; init; } = Empty;
 
+    /// <summary>The MCP tool agents call for this endpoint (<c>ExposeAsTool</c>), if it is one.</summary>
+    public ApiManifestTool? Tool { get; init; }
+
     /// <summary>The manifest key: method and route.</summary>
     public override string ToString() => $"{Method} {Route}";
 
     internal static readonly IReadOnlyDictionary<string, string> Empty = new SortedDictionary<string, string>(StringComparer.Ordinal);
+}
+
+/// <summary>An endpoint offered to AI agents as an MCP tool, in an <see cref="ApiManifest"/>.</summary>
+/// <remarks>The tool's input and output are the endpoint's parameters, body and responses, compared as usual.</remarks>
+public sealed class ApiManifestTool
+{
+    /// <summary>The tool name agents call.</summary>
+    public required string Name { get; init; }
+
+    /// <summary>The description agents read.</summary>
+    public string Description { get; init; } = string.Empty;
+
+    /// <summary>
+    /// <c>read-only</c>, <c>destructive</c> or <c>non-destructive</c>; then <c>idempotent</c> for a write that is, and
+    /// <c>open-world</c> for a tool that reaches beyond the API.
+    /// </summary>
+    public IReadOnlyList<string> Hints { get; init; } = [];
 }
 
 /// <summary>A named type in an <see cref="ApiManifest"/>: an object with properties, or an enum.</summary>
@@ -212,7 +232,10 @@ public enum ApiChangeKind
     /// <summary>An existing client can stop working: something it sends is rejected, or something it reads is gone or different.</summary>
     Breaking,
 
-    /// <summary>Clients keep working, but access got wider: less authorization than before.</summary>
+    /// <summary>
+    /// Clients keep working, but access got wider: less authorization than before, a new way for agents to change data,
+    /// or a tool agents no longer need to confirm with the user.
+    /// </summary>
     Security,
 
     /// <summary>Existing clients keep working.</summary>
@@ -301,6 +324,15 @@ internal static class ManifestJson
                 WriteMap(w, "form", Sorted(e.Form));
                 if (e.Body is not null) w.WriteString("body", e.Body);
                 WriteMap(w, "responses", Sorted(e.Responses));
+                if (e.Tool is { } tool)
+                {
+                    w.WriteStartObject("tool");
+                    w.WriteString("name", tool.Name);
+                    w.WriteString("description", tool.Description);
+                    WriteList(w, "hints", tool.Hints);
+                    w.WriteEndObject();
+                }
+
                 w.WriteEndObject();
             }
             w.WriteEndObject();
@@ -358,6 +390,14 @@ internal static class ManifestJson
                     Form = ReadMap(e.Value, "form"),
                     Body = e.Value.TryGetProperty("body", out var body) ? body.GetString() : null,
                     Responses = ReadMap(e.Value, "responses"),
+                    Tool = e.Value.TryGetProperty("tool", out var tool) && tool.ValueKind == JsonValueKind.Object
+                        ? new ApiManifestTool
+                        {
+                            Name = tool.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty,
+                            Description = tool.TryGetProperty("description", out var text) ? text.GetString() ?? string.Empty : string.Empty,
+                            Hints = ReadList(tool, "hints"),
+                        }
+                        : null,
                 };
             }
         }

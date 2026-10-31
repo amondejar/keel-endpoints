@@ -14,6 +14,9 @@
 
   <ItemGroup>
     <PackageReference Include="Keel.Endpoints" Version="KEEL_PACKAGE_VERSION" />
+<!--#if (mcp) -->
+    <PackageReference Include="Keel.Endpoints.Mcp" Version="KEEL_PACKAGE_VERSION" />
+<!--#endif -->
     <!-- 10.0.10 or later: what Asp.Versioning.OpenApi needs. -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
     <!-- It still brings Microsoft.OpenApi 2.0.0: pin past GHSA-v5pm-xwqc-g5wc (fixed in 2.7.5). -->

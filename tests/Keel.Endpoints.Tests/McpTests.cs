@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using Keel.Endpoints.Mcp;
 using Keel.Endpoints.Mcp.Internal;
+using Keel.Endpoints.Testing;
 using Keel.Endpoints.Tests.McpFixtures.Invoices;
 using ModelContextProtocol;
 using ModelContextProtocol.Client;
@@ -182,6 +183,98 @@ internal static class McpTests
             Assert.True(error.Message.Contains("are both the MCP tool 'same'"));
         });
 
+        Test("MCP: the API manifest records each tool, its name and hints, for dotnet keel diff", async () =>
+        {
+            await using var app = await StartAsync();
+            var manifest = ApiManifest.Create(app.Services);
+
+            var get = manifest.Endpoints["GET api/invoices/{id}"].Tool!;
+            var create = manifest.Endpoints["POST api/invoices"].Tool!;
+            var delete = manifest.Endpoints["DELETE api/invoices/{id}"].Tool!;
+
+            Assert.Equal("invoices_get", get.Name);
+            Assert.Equal("Gets an invoice by its number.", get.Description);
+            Assert.Equal("read-only", string.Join(",", get.Hints));
+            Assert.Equal("non-destructive", string.Join(",", create.Hints));
+            Assert.Equal("destructive,idempotent", string.Join(",", delete.Hints));
+            Assert.True(manifest.Endpoints["GET api/invoices/{id}/pdf"].Tool is null);
+
+            var json = manifest.ToJson();
+            Assert.True(json.Contains("\"name\": \"invoices_get\""), json);
+            Assert.Equal(json, ApiManifest.Parse(json).ToJson());
+        });
+
+        Test("MCP: the server card is public, cacheable discovery metadata at <mcp-url>/server-card", async () =>
+        {
+            await using var app = await StartAsync(mcp: o => o.ServerCard = Card());
+            using var http = new HttpClient { BaseAddress = new Uri(app.Urls.First()) };
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/mcp/server-card");
+            request.Headers.Accept.ParseAdd("application/mcp-server-card+json");
+
+            using var response = await http.SendAsync(request);
+            using var card = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var root = card.RootElement;
+
+            Assert.Equal(200, (int)response.StatusCode);
+            Assert.Equal("application/mcp-server-card+json", response.Content.Headers.ContentType!.MediaType);
+            Assert.Equal("https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json", root.GetProperty("$schema").GetString());
+            Assert.Equal("com.example/invoices", root.GetProperty("name").GetString());
+            Assert.Equal("2.1.0", root.GetProperty("version").GetString());
+            Assert.Equal("github", root.GetProperty("repository").GetProperty("source").GetString());
+            Assert.Equal("streamable-http", root.GetProperty("remotes")[0].GetProperty("type").GetString());
+            Assert.Equal(app.Urls.First() + "/mcp", root.GetProperty("remotes")[0].GetProperty("url").GetString());
+            Assert.True(!root.TryGetProperty("tools", out _));
+            Assert.Equal("*", string.Join(",", response.Headers.GetValues("Access-Control-Allow-Origin")));
+            Assert.Equal("public, max-age=3600", response.Headers.CacheControl!.ToString());
+
+            using var again = new HttpRequestMessage(HttpMethod.Get, "/mcp/server-card");
+            again.Headers.IfNoneMatch.Add(response.Headers.ETag!);
+            using var notModified = await http.SendAsync(again);
+            Assert.Equal(304, (int)notModified.StatusCode);
+
+            // The live connection reports the same identity.
+            await using var client = await Client(app);
+            Assert.Equal("com.example/invoices", client.ServerInfo?.Name);
+            Assert.Equal("2.1.0", client.ServerInfo?.Version);
+        });
+
+        Test("MCP: no server card unless configured; the AI catalog only when asked", async () =>
+        {
+            await using (var plain = await StartAsync())
+            {
+                using var http = new HttpClient { BaseAddress = new Uri(plain.Urls.First()) };
+                Assert.Equal(404, (int)(await http.GetAsync("/mcp/server-card")).StatusCode);
+                Assert.Equal(404, (int)(await http.GetAsync("/.well-known/ai-catalog.json")).StatusCode);
+            }
+
+            await using var app = await StartAsync(mcp: o => o.ServerCard = new McpServerCard
+            {
+                Name = "com.example/invoices",
+                Description = "Invoices of Example Inc.",
+                Url = new Uri("https://api.example.com/mcp"),
+                PublishAiCatalog = true,
+            });
+            using var client = new HttpClient { BaseAddress = new Uri(app.Urls.First()) };
+            using var response = await client.GetAsync("/.well-known/ai-catalog.json");
+            using var catalog = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var entry = catalog.RootElement.GetProperty("entries")[0];
+
+            Assert.Equal("application/ai-catalog+json", response.Content.Headers.ContentType!.MediaType);
+            Assert.Equal("urn:air:example.com:mcp:invoices", entry.GetProperty("identifier").GetString());
+            Assert.Equal("application/mcp-server-card+json", entry.GetProperty("type").GetString());
+            Assert.Equal("https://api.example.com/mcp/server-card", entry.GetProperty("url").GetString());
+        });
+
+        Test("MCP: an invalid server card stops the host", async () =>
+        {
+            var error = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            {
+                await using var app = await StartAsync(mcp: o => o.ServerCard = new McpServerCard { Name = "invoices", Description = "Invoices." });
+            });
+
+            Assert.True(error.Message.Contains("reverse-DNS"), error.Message);
+        });
+
         Test("MCP: tool names are the operation names in snake case", () =>
         {
             Assert.Equal("invoices_get", ToolNames.SnakeCase("InvoicesGet"));
@@ -194,7 +287,16 @@ internal static class McpTests
 
     private static string Text(CallToolResult result) => string.Concat(result.Content.OfType<TextContentBlock>().Select(c => c.Text));
 
-    private static async Task<WebApplication> StartAsync(Action<RouteGroupBuilder>? extra = null)
+    private static McpServerCard Card() => new()
+    {
+        Name = "com.example/invoices",
+        Description = "Invoices of Example Inc.",
+        Title = "Invoices",
+        Version = "2.1.0",
+        RepositoryUrl = "https://github.com/example/invoices",
+    };
+
+    private static async Task<WebApplication> StartAsync(Action<RouteGroupBuilder>? extra = null, Action<KeelMcpOptions>? mcp = null)
     {
         var builder = WebApplication.CreateBuilder(["--urls", "http://127.0.0.1:0", "--Logging:LogLevel:Default=None"]);
         builder.Services.AddKeelEndpoints();
@@ -202,7 +304,7 @@ internal static class McpTests
         builder.Services.AddProblemDetails();
         builder.Services.AddAuthorization(o => o.AddPolicy("admin", p => p.RequireRole("admin")));
         builder.Services.AddSingleton<InvoiceStore>();
-        builder.Services.AddKeelMcp();
+        builder.Services.AddKeelMcp(mcp);
         var app = builder.Build();
 
         // A stand-in for authentication: X-User becomes the caller, X-Role its role.
@@ -233,9 +335,9 @@ internal static class McpTests
             extra(api);
         }
 
-        app.MapKeelMcp();
         try
         {
+            app.MapKeelMcp();
             await app.StartAsync();
         }
         catch

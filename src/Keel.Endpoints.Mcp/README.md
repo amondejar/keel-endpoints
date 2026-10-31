@@ -36,5 +36,7 @@ public sealed class Endpoint(InvoiceStore store) : Endpoint<DeleteInvoice>
 | Authorization | The endpoint's own policies, with the MCP request's identity; tools a caller cannot use are not listed |
 | Writes | Must set `Destructive` (`false` if it only adds, `true` if it may overwrite or delete), or the host does not start |
 | Errors | A 4xx or 5xx is a tool error with the status and the endpoint's problem details; unhandled exceptions say nothing more |
+| Reviews | The API manifest records each tool: `dotnet keel diff` reports renamed tools, new writes and lost confirmations |
+| Discovery | Optional MCP Server Card at `/mcp/server-card` (`o.ServerCard = new() { Name, Description }`) |
 
 See the [MCP guide](https://github.com/amondejar/keel-endpoints/blob/main/docs/mcp.md).

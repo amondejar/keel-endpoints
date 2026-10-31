@@ -13,6 +13,7 @@ abstract class Keel.Endpoints.ResultEndpoint<TRequest, TResult> : Keel.Endpoints
 abstract class Keel.Endpoints.StreamEndpoint<TRequest, TItem> : Keel.Endpoints.EndpointBase
 enum Keel.Endpoints.RequestBinding
 enum Keel.Endpoints.StreamFormat
+interface Keel.Endpoints.IAgentToolMetadata
 protected Keel.Endpoints.Endpoint<TRequest, TResponse>()
 protected Keel.Endpoints.Endpoint<TRequest>()
 protected Keel.Endpoints.EndpointGroup()
@@ -45,6 +46,12 @@ public abstract System.Threading.Tasks.Task Keel.Endpoints.Endpoint<TRequest>.Ha
 public abstract System.Threading.Tasks.Task<TResponse> Keel.Endpoints.Endpoint<TRequest, TResponse>.HandleAsync(TRequest request, System.Threading.CancellationToken cancellationToken)
 public abstract System.Threading.Tasks.Task<TResponse> Keel.Endpoints.EndpointWithoutRequest<TResponse>.HandleAsync(System.Threading.CancellationToken cancellationToken)
 public abstract System.Threading.Tasks.Task<TResult> Keel.Endpoints.ResultEndpoint<TRequest, TResult>.HandleAsync(TRequest request, System.Threading.CancellationToken cancellationToken)
+public abstract bool Keel.Endpoints.IAgentToolMetadata.Idempotent { get; }
+public abstract bool Keel.Endpoints.IAgentToolMetadata.OpenWorld { get; }
+public abstract bool Keel.Endpoints.IAgentToolMetadata.ReadOnly { get; }
+public abstract bool? Keel.Endpoints.IAgentToolMetadata.Destructive { get; }
+public abstract string Keel.Endpoints.IAgentToolMetadata.Description { get; }
+public abstract string Keel.Endpoints.IAgentToolMetadata.Name { get; }
 public abstract void Keel.Endpoints.EndpointGroup.Configure(Keel.Endpoints.EndpointOptions options)
 public bool Keel.Endpoints.KeelEndpointMetadata.Equals(Keel.Endpoints.KeelEndpointMetadata? other)
 public bool Keel.Endpoints.KeelOptions.RequireExplicitAuthorization { get; set; }

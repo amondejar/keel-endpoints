@@ -1,4 +1,5 @@
 using Keel.Endpoints.Mcp;
+using Keel.Endpoints.Mcp.Internal;
 using Microsoft.AspNetCore.Builder;
 
 namespace Keel.Endpoints;
@@ -20,6 +21,12 @@ public static class McpEndpointOptionsExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(description);
         var tool = new McpToolOptions();
         configure?.Invoke(tool);
-        return options.Convention(b => b.WithMetadata(new McpToolMetadata(description.Trim(), tool)));
+        var metadata = new McpToolMetadata(description.Trim(), tool);
+        return options.Convention(b =>
+        {
+            b.WithMetadata(metadata);
+            // Once every convention has run, the endpoint's name and method are final: resolve the tool from them.
+            b.Finally(endpoint => endpoint.Metadata.Add(AgentTool.Resolve(metadata, endpoint.Metadata)));
+        });
     }
 }

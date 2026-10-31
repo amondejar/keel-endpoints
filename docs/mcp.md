@@ -6,6 +6,8 @@ tool call runs the endpoint itself. Nothing is exposed unless the endpoint says 
 
 ## Setup
 
+A new API can start with it: `dotnet new keel-api -n Shop --mcp` (also with `--aot`).
+
 ```csharp
 builder.Services.AddKeelEndpoints();
 builder.Services.AddValidation();
@@ -79,6 +81,66 @@ see anonymous tools. To keep anonymous callers out entirely:
 ```csharp
 app.MapKeelMcp("/mcp").RequireAuthorization();
 ```
+
+## Reviewing tool changes
+
+With an [API manifest](api-manifest.md) test, each tool is recorded next to its endpoint, and `dotnet keel diff` (or
+the api-diff action on a pull request) reports what changes for agents:
+
+```text
+breaking   GET api/invoices/{id}: MCP tool renamed from 'invoices_get' to 'invoice_get': agents that use it stop working
+security   DELETE api/invoices/{id}: MCP tool 'invoices_delete' is no longer marked destructive: agents may call it without asking the user
+security   POST api/refunds: now the MCP tool 'refunds_create', which changes data: agents can call it
+compatible GET api/invoices: MCP tool 'invoices_search' description changed to "Lists invoices of a customer."
+```
+
+`--fail-on security` stops a pull request that gives agents a new way to change data, or less reason to ask. The
+description is shown in full because it is a prompt: review it like code.
+
+## Discovery: the Server Card
+
+An [MCP Server Card](https://modelcontextprotocol.io/seps/2127-mcp-server-cards) lets a client or a registry find the
+server and how to connect before connecting. It is opt-in:
+
+```csharp
+builder.Services.AddKeelMcp(o => o.ServerCard = new()
+{
+    Name = "com.example/invoices",              // reverse DNS, a domain you control
+    Description = "Invoices of Example Inc.",   // up to 100 characters
+    Title = "Invoices",
+    RepositoryUrl = "https://github.com/example/invoices",
+    // Url = new Uri("https://api.example.com/mcp"),   // behind a proxy: the URL clients use
+    // PublishAiCatalog = true,                        // also /.well-known/ai-catalog.json
+});
+```
+
+`MapKeelMcp("/mcp")` then serves `GET /mcp/server-card` (`application/mcp-server-card+json`):
+
+```json
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
+  "name": "com.example/invoices",
+  "version": "1.4.0",
+  "description": "Invoices of Example Inc.",
+  "title": "Invoices",
+  "repository": { "url": "https://github.com/example/invoices", "source": "github" },
+  "remotes": [ { "type": "streamable-http", "url": "https://api.example.com/mcp" } ]
+}
+```
+
+- **Public**: anonymous, with `Access-Control-Allow-Origin: *`, even when the MCP endpoint requires authorization.
+  Put nothing private in it.
+- **Cacheable**: `Cache-Control: public, max-age=3600` and an `ETag`; `If-None-Match` gets a `304`.
+- **No tools**: the spec leaves them out on purpose, since what a caller may call depends on who it is. Agents list
+  them at runtime.
+- **Consistent**: the version defaults to the application's, and the name and version become the server info the
+  live connection reports, unless you set `McpServerOptions.ServerInfo` yourself.
+- **Checked at startup**: a name that is not reverse-DNS, a missing or long description, or a version range stops the
+  host.
+
+Without `Url`, the card's URL comes from the request: set `AllowedHosts` in production so a forged `Host` header cannot
+end up in a cached card. `PublishAiCatalog` adds `/.well-known/ai-catalog.json` with one entry for the card; leave it
+off if something else on the domain publishes the catalog.
 
 ## Testing
 

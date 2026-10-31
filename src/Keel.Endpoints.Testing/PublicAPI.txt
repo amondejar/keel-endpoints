@@ -12,6 +12,8 @@ public Keel.Endpoints.Testing.ApiManifest()
 public Keel.Endpoints.Testing.ApiManifestEndpoint()
 public Keel.Endpoints.Testing.ApiManifestException(string message, System.Collections.Generic.IReadOnlyList<Keel.Endpoints.Testing.ApiChange> changes)
 public Keel.Endpoints.Testing.ApiManifestOptions()
+public Keel.Endpoints.Testing.ApiManifestTool()
+public Keel.Endpoints.Testing.ApiManifestTool? Keel.Endpoints.Testing.ApiManifestEndpoint.Tool { get; init; }
 public Keel.Endpoints.Testing.ApiManifestType()
 public Keel.Endpoints.Testing.ApiManifestUpdate? Keel.Endpoints.Testing.ApiManifestOptions.Update { get; set; }
 public Keel.Endpoints.Testing.EndpointClient(System.Net.Http.HttpClient http, string prefix = "", System.Text.Json.JsonSerializerOptions? json = null)
@@ -28,6 +30,7 @@ public System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyVa
 public System.Collections.Generic.IReadOnlyList<string> Keel.Endpoints.Testing.ApiManifestEndpoint.Policies { get; init; }
 public System.Collections.Generic.IReadOnlyList<string> Keel.Endpoints.Testing.ApiManifestEndpoint.Roles { get; init; }
 public System.Collections.Generic.IReadOnlyList<string> Keel.Endpoints.Testing.ApiManifestEndpoint.Schemes { get; init; }
+public System.Collections.Generic.IReadOnlyList<string> Keel.Endpoints.Testing.ApiManifestTool.Hints { get; init; }
 public System.Collections.Generic.IReadOnlyList<string>? Keel.Endpoints.Testing.ApiManifestType.Values { get; init; }
 public System.Func<Microsoft.AspNetCore.Mvc.ApiExplorer.ApiDescription, bool>? Keel.Endpoints.Testing.ApiManifestOptions.Include { get; set; }
 public System.Net.Http.HttpClient Keel.Endpoints.Testing.EndpointClient.Http { get; }
@@ -49,6 +52,7 @@ public override string Keel.Endpoints.Testing.ApiManifestEndpoint.ToString()
 public override string Keel.Endpoints.Testing.EndpointResponse<T>.ToString()
 public required string Keel.Endpoints.Testing.ApiManifestEndpoint.Method { get; init; }
 public required string Keel.Endpoints.Testing.ApiManifestEndpoint.Route { get; init; }
+public required string Keel.Endpoints.Testing.ApiManifestTool.Name { get; init; }
 public static Keel.Endpoints.Testing.ApiManifest Keel.Endpoints.Testing.ApiManifest.Create(System.IServiceProvider services, Keel.Endpoints.Testing.ApiManifestOptions? options = null)
 public static Keel.Endpoints.Testing.ApiManifest Keel.Endpoints.Testing.ApiManifest.Load(string path)
 public static Keel.Endpoints.Testing.ApiManifest Keel.Endpoints.Testing.ApiManifest.Parse(string json)
@@ -62,6 +66,7 @@ public string Keel.Endpoints.Testing.ApiChange.Description { get; init; }
 public string Keel.Endpoints.Testing.ApiChange.Endpoint { get; init; }
 public string Keel.Endpoints.Testing.ApiManifest.ToJson()
 public string Keel.Endpoints.Testing.ApiManifestEndpoint.Authorization { get; init; }
+public string Keel.Endpoints.Testing.ApiManifestTool.Description { get; init; }
 public string Keel.Endpoints.Testing.EndpointResponse<T>.Body { get; init; }
 public string? Keel.Endpoints.Testing.ApiManifestEndpoint.Body { get; init; }
 public string? Keel.Endpoints.Testing.ApiManifestEndpoint.Operation { get; init; }
@@ -72,6 +77,7 @@ sealed class Keel.Endpoints.Testing.ApiManifest
 sealed class Keel.Endpoints.Testing.ApiManifestEndpoint
 sealed class Keel.Endpoints.Testing.ApiManifestException : System.Exception
 sealed class Keel.Endpoints.Testing.ApiManifestOptions
+sealed class Keel.Endpoints.Testing.ApiManifestTool
 sealed class Keel.Endpoints.Testing.ApiManifestType
 sealed class Keel.Endpoints.Testing.EndpointClient
 sealed class Keel.Endpoints.Testing.EndpointResponse<T> : System.IEquatable<Keel.Endpoints.Testing.EndpointResponse<T>>

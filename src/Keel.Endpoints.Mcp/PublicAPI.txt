@@ -1,8 +1,13 @@
 public Keel.Endpoints.Mcp.KeelMcpOptions()
+public Keel.Endpoints.Mcp.McpServerCard()
+public Keel.Endpoints.Mcp.McpServerCard? Keel.Endpoints.Mcp.KeelMcpOptions.ServerCard { get; set; }
 public Keel.Endpoints.Mcp.McpToolMetadata(string Description, Keel.Endpoints.Mcp.McpToolOptions Options)
 public Keel.Endpoints.Mcp.McpToolOptions Keel.Endpoints.Mcp.McpToolMetadata.Options { get; init; }
 public Keel.Endpoints.Mcp.McpToolOptions()
+public System.Collections.Generic.IList<string> Keel.Endpoints.Mcp.McpServerCard.ProtocolVersions { get; }
+public System.Uri? Keel.Endpoints.Mcp.McpServerCard.Url { get; set; }
 public bool Keel.Endpoints.Mcp.KeelMcpOptions.ListAuthorizedToolsOnly { get; set; }
+public bool Keel.Endpoints.Mcp.McpServerCard.PublishAiCatalog { get; set; }
 public bool Keel.Endpoints.Mcp.McpToolMetadata.Equals(Keel.Endpoints.Mcp.McpToolMetadata? other)
 public bool Keel.Endpoints.Mcp.McpToolOptions.OpenWorld { get; set; }
 public bool? Keel.Endpoints.Mcp.McpToolOptions.Destructive { get; set; }
@@ -10,16 +15,23 @@ public bool? Keel.Endpoints.Mcp.McpToolOptions.Idempotent { get; set; }
 public override bool Keel.Endpoints.Mcp.McpToolMetadata.Equals(object? obj)
 public override int Keel.Endpoints.Mcp.McpToolMetadata.GetHashCode()
 public override string Keel.Endpoints.Mcp.McpToolMetadata.ToString()
+public required string Keel.Endpoints.Mcp.McpServerCard.Description { get; set; }
+public required string Keel.Endpoints.Mcp.McpServerCard.Name { get; set; }
 public static Keel.Endpoints.EndpointOptions Keel.Endpoints.McpEndpointOptionsExtensions.ExposeAsTool(this Keel.Endpoints.EndpointOptions options, string description, System.Action<Keel.Endpoints.Mcp.McpToolOptions>? configure = null)
 public static Microsoft.AspNetCore.Builder.IEndpointConventionBuilder Keel.Endpoints.Mcp.KeelMcpExtensions.MapKeelMcp(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, string pattern = "/mcp")
 public static Microsoft.Extensions.DependencyInjection.IMcpServerBuilder Keel.Endpoints.Mcp.KeelMcpExtensions.AddKeelMcp(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<Keel.Endpoints.Mcp.KeelMcpOptions>? configure = null)
 public static bool Keel.Endpoints.Mcp.McpToolMetadata.op_Equality(Keel.Endpoints.Mcp.McpToolMetadata? left, Keel.Endpoints.Mcp.McpToolMetadata? right)
 public static bool Keel.Endpoints.Mcp.McpToolMetadata.op_Inequality(Keel.Endpoints.Mcp.McpToolMetadata? left, Keel.Endpoints.Mcp.McpToolMetadata? right)
 public string Keel.Endpoints.Mcp.McpToolMetadata.Description { get; init; }
+public string? Keel.Endpoints.Mcp.McpServerCard.RepositoryUrl { get; set; }
+public string? Keel.Endpoints.Mcp.McpServerCard.Title { get; set; }
+public string? Keel.Endpoints.Mcp.McpServerCard.Version { get; set; }
+public string? Keel.Endpoints.Mcp.McpServerCard.WebsiteUrl { get; set; }
 public string? Keel.Endpoints.Mcp.McpToolOptions.Name { get; set; }
 public string? Keel.Endpoints.Mcp.McpToolOptions.Title { get; set; }
 public void Keel.Endpoints.Mcp.McpToolMetadata.Deconstruct(out string Description, out Keel.Endpoints.Mcp.McpToolOptions Options)
 sealed class Keel.Endpoints.Mcp.KeelMcpOptions
+sealed class Keel.Endpoints.Mcp.McpServerCard
 sealed class Keel.Endpoints.Mcp.McpToolMetadata : System.IEquatable<Keel.Endpoints.Mcp.McpToolMetadata>
 sealed class Keel.Endpoints.Mcp.McpToolOptions
 static class Keel.Endpoints.Mcp.KeelMcpExtensions

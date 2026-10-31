@@ -101,7 +101,18 @@ internal static class ManifestBuilder
                         return (described + Media(g.SelectMany(r => r.ApiResponseFormats).Select(f => f.MediaType), type)).Trim();
                     },
                     StringComparer.Ordinal),
+            Tool = metadata.OfType<IAgentToolMetadata>().LastOrDefault() is { } tool ? ToolOf(tool) : null,
         };
+    }
+
+    private static ApiManifestTool ToolOf(IAgentToolMetadata tool)
+    {
+        var hints = new List<string>();
+        if (tool.ReadOnly) hints.Add("read-only");
+        else if (tool.Destructive is { } destructive) hints.Add(destructive ? "destructive" : "non-destructive");
+        if (!tool.ReadOnly && tool.Idempotent) hints.Add("idempotent");
+        if (tool.OpenWorld) hints.Add("open-world");
+        return new ApiManifestTool { Name = tool.Name, Description = tool.Description, Hints = hints };
     }
 
     /// <summary><c>" as text/plain"</c> when the media types are not just JSON; JSON is the default.</summary>

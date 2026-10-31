@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Packs Keel.Endpoints and its templates, installs the templates, creates an API with keel-api, adds
-# slices with keel-slice, builds it and calls it; then creates the --aot variant, publishes it natively
-# and calls it. Usage: eng/template-smoke.sh [runtime-identifier]   (default: linux-x64)
+# slices with keel-slice, builds it and calls it; creates the --mcp variant and calls its MCP tools; then
+# creates the --aot --mcp variant, publishes it natively and calls it, MCP tools included. Usage: eng/template-smoke.sh [runtime-identifier]   (default: linux-x64)
 # KEEL_EXTRA_SOURCES (space-separated folders) replaces nuget.org, e.g. for offline runs;
 # KEEL_PACK_ARGS and KEEL_BUILD_ARGS pass extra MSBuild arguments.
 set -euo pipefail
@@ -18,6 +18,7 @@ export NUGET_PACKAGES="$work/packages"   # never reuse a cached Keel package fro
 
 # A throwaway version, lower than the published baseline: package validation does not apply.
 dotnet pack "$root/src/Keel.Endpoints" -c Release -p:Version="$version" -p:KeelPackageValidation=false -o "$feed" ${KEEL_PACK_ARGS:-}
+dotnet pack "$root/src/Keel.Endpoints.Mcp" -c Release -p:Version="$version" -p:KeelPackageValidation=false -o "$feed" ${KEEL_PACK_ARGS:-}
 dotnet pack "$root/src/Keel.Endpoints.Templates" -c Release -p:Version="$version" -o "$feed" ${KEEL_PACK_ARGS:-}
 
 dotnet new uninstall Keel.Endpoints.Templates > /dev/null 2>&1 || true
@@ -34,6 +35,17 @@ dotnet new install "$feed/Keel.Endpoints.Templates.$version.nupkg"
 fail=0
 check() { if [[ "$3" == "$2" ]]; then echo "  PASS  $1"; else echo "  FAIL  $1 (got $3, expected $2)"; fail=1; fi; }
 status() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
+# A stateless Streamable HTTP request, as an MCP client sends it.
+mcp() { curl -s -X POST -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -H 'MCP-Protocol-Version: 2025-11-25' -d "$2" "$1"; }
+has() { if grep -q "$2" <<<"$1"; then echo yes; else echo "no: $1"; fi; }
+check_mcp() {
+  local tools call
+  tools="$(mcp "$2" '{"jsonrpc":"2.0","id":1,"method":"tools/list"}')"
+  check "$1: tools/list has todos_get"      yes "$(has "$tools" '"todos_get"')"
+  check "$1: tools/list has todos_create"   yes "$(has "$tools" '"todos_create"')"
+  call="$(mcp "$2" '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"todos_create","arguments":{"title":"from an agent"}}}')"
+  check "$1: tools/call runs the endpoint"  yes "$(has "$call" 'from an agent')"
+}
 wait_up() { for _ in $(seq 1 80); do curl -s "$1" > /dev/null && return; sleep 0.25; done; }
 
 # 1. keel-api + keel-slice, JIT
@@ -59,14 +71,24 @@ check "keel-slice put: body validation"  400 "$(status -X PUT -H 'Content-Type: 
 check "keel-api: scalar page"            200 "$(status -L http://127.0.0.1:5097/scalar)"   # Scalar redirects /scalar to /scalar/
 kill $pid 2>/dev/null || true
 
-# 2. keel-api --aot, Native AOT
-cd "$work" && dotnet new keel-api -n ShopAot --aot --no-restore && cd ShopAot
+# 2. keel-api --mcp, JIT
+cd "$work" && dotnet new keel-api -n ShopMcp --mcp && cd ShopMcp
+dotnet build -warnaserror ${KEEL_BUILD_ARGS:-}
+dotnet run --no-build --urls http://127.0.0.1:5099 > run.log 2>&1 & pid=$!
+wait_up http://127.0.0.1:5099/api/health
+check "keel-api --mcp: health"           200 "$(status http://127.0.0.1:5099/api/health)"
+check_mcp "keel-api --mcp" http://127.0.0.1:5099/mcp
+kill $pid 2>/dev/null || true
+
+# 3. keel-api --aot --mcp, Native AOT
+cd "$work" && dotnet new keel-api -n ShopAot --aot --mcp --no-restore && cd ShopAot
 dotnet publish -c Release -r "$rid" -o out ${KEEL_BUILD_ARGS:-}
 ./out/ShopAot --urls http://127.0.0.1:5098 > run.log 2>&1 & pid=$!
 wait_up http://127.0.0.1:5098/api/health
 check "keel-api --aot: health"           200 "$(status http://127.0.0.1:5098/api/health)"
 check "keel-api --aot: create todo"      201 "$(status -H 'Content-Type: application/json' -d '{"title":"x"}' http://127.0.0.1:5098/api/todos)"
 check "keel-api --aot: validation"       400 "$(status -H 'Content-Type: application/json' -d '{"title":""}' http://127.0.0.1:5098/api/todos)"
+check_mcp "keel-api --aot --mcp" http://127.0.0.1:5098/mcp
 kill $pid 2>/dev/null || true
 
 exit $fail
