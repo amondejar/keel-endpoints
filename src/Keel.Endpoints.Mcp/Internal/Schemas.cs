@@ -38,7 +38,7 @@ internal static class Schemas
             var routeValue = routeParameters.Contains(property.Name, StringComparer.OrdinalIgnoreCase);
             if ((property.IsRequired || routeValue || Attributes(property).OfType<RequiredAttribute>().Any()) && names.Add(property.Name))
             {
-                required.Add(JsonValue.Create(property.Name));
+                required.Add((JsonNode)JsonValue.Create(property.Name));
             }
         }
 
