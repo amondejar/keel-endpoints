@@ -49,6 +49,22 @@ internal static class Schemas
     public static JsonElement? Output(JsonTypeInfo response) =>
         JsonSchemaExporter.GetJsonSchemaAsNode(response, Exporter) is { } schema ? ToElement(schema) : null;
 
+    public static bool IsObject(JsonElement schema) =>
+        schema.ValueKind == JsonValueKind.Object && schema.TryGetProperty("type", out var type) && type.ValueKind switch
+        {
+            JsonValueKind.String => type.GetString() == "object",
+            JsonValueKind.Array => type.EnumerateArray().Any(t => t.GetString() == "object") && type.EnumerateArray().All(t => t.GetString() is "object" or "null"),
+            _ => false,
+        };
+
+    /// <summary><c>{"type": "object", "properties": {"result": schema}, "required": ["result"]}</c>.</summary>
+    public static JsonElement WrapResult(JsonElement schema) => ToElement(new JsonObject
+    {
+        ["type"] = "object",
+        ["properties"] = new JsonObject { ["result"] = JsonNode.Parse(schema.GetRawText()) },
+        ["required"] = new JsonArray((JsonNode)JsonValue.Create("result")),
+    });
+
     /// <summary>The attributes of a contract member: on the property, and on the record's constructor parameter.</summary>
     public static IEnumerable<object> Attributes(JsonPropertyInfo property)
     {

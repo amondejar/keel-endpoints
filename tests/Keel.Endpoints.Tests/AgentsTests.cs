@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Keel.Endpoints.Agents;
 using Keel.Endpoints.Agents.Internal;
+using Keel.Endpoints.Idempotency;
 using Keel.Endpoints.Mcp;
 using Keel.Endpoints.Tests.AgentsFixtures.Payments;
 using Microsoft.AspNetCore.DataProtection;
@@ -288,6 +289,58 @@ internal static class AgentsTests
             Assert.True(error.Message.Contains("MapKeelApprovals"), error.Message);
         });
 
+        Test("Agents: a write the model repeats is answered from the idempotency store, not done twice", async () =>
+        {
+            await using var app = await StartAsync();
+            await using var client = await Client(app, answer: null);
+            var charge = new Dictionary<string, object?> { ["id"] = 1, ["amount"] = 10 };
+
+            var first = await client.CallToolAsync("payments_charge", charge);
+            var repeated = await client.CallToolAsync("payments_charge", charge);
+            var other = await client.CallToolAsync("payments_charge", new Dictionary<string, object?> { ["id"] = 1, ["amount"] = 20 });
+
+            // RequireKey is satisfied: the agent call got a key derived from the call.
+            Assert.True(first.IsError is null or false, Text(first));
+            Assert.True(repeated.IsError is null or false && Text(repeated).Contains("nothing was done again"), Text(repeated));
+            Assert.True(!Text(first).Contains("nothing was done again"), Text(first));
+            Assert.Equal("charge 1 10|charge 1 20", string.Join("|", Ledger(app).Actions));
+            Assert.True(other.IsError is null or false, Text(other));
+        });
+
+        Test("Agents: with IdempotencyKeys off, agent calls get no key", async () =>
+        {
+            await using var app = await StartAsync(o => o.IdempotencyKeys = false);
+            await using var client = await Client(app, answer: null);
+
+            var result = await client.CallToolAsync("payments_charge", new Dictionary<string, object?> { ["id"] = 1, ["amount"] = 10 });
+
+            Assert.True(result.IsError == true && Text(result).StartsWith("400", StringComparison.Ordinal), Text(result));
+            Assert.Equal(0, Ledger(app).Actions.Count);
+        });
+
+        Test("Approvals: the page says Allow / Deny, in the approver's language", async () =>
+        {
+            await using var app = await StartAsync(o => o.ApprovalTexts = AgentApprovalTexts.Spanish);
+            await using var client = await Client(app, answer: null);
+            var link = Link(await client.CallToolAsync("payments_payout", AcmePayout));
+
+            using (var http = new HttpClient())
+            {
+                var html = await http.GetStringAsync(link);
+                Assert.True(html.Contains(">Permitir</button>") && html.Contains(">Denegar</button>") && html.Contains("Permitir que el agente"), html);
+            }
+
+            var decided = await Decide(link, approve: true);
+            Assert.Equal("Permitido. La próxima llamada del agente lo hará.", decided.Body.GetProperty("result").GetString());
+
+            await using var english = await StartAsync();
+            await using var englishClient = await Client(english, answer: null);
+            var englishLink = Link(await englishClient.CallToolAsync("payments_payout", AcmePayout));
+            using var plain = new HttpClient();
+            var englishHtml = await plain.GetStringAsync(englishLink);
+            Assert.True(englishHtml.Contains(">Allow</button>") && englishHtml.Contains(">Deny</button>") && englishHtml.Contains("Allow the agent to do this?"), englishHtml);
+        });
+
         Test("Agents: a confirmation is bound to the tool, the arguments and the user, and is tamper-proof", () =>
         {
             var tokens = new ConfirmationTokens(new EphemeralDataProtectionProvider(), Options.Create(new KeelAgentsOptions()), TimeProvider.System);
@@ -339,6 +392,7 @@ internal static class AgentsTests
         builder.Services.AddSingleton<RecordingAuditSink>();
         builder.Services.AddSingleton<IAgentAuditSink>(s => s.GetRequiredService<RecordingAuditSink>());
         builder.Services.AddAuthorization(o => o.AddPolicy("supervisors", p => p.RequireRole("supervisor")));
+        builder.Services.AddKeelIdempotency();
         builder.Services.AddKeelMcp();
         builder.Services.AddKeelAgents(configure);
         var app = builder.Build();
@@ -364,6 +418,7 @@ internal static class AgentsTests
         api.MapEndpoint<AgentsFixtures.Payments.List.Endpoint>();
         api.MapEndpoint<AgentsFixtures.Payments.Payout.Endpoint>();
         api.MapEndpoint<AgentsFixtures.Payments.Close.Endpoint>();
+        api.MapEndpoint<AgentsFixtures.Payments.Charge.Endpoint>();
         try
         {
             app.MapKeelMcp();

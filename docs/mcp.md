@@ -44,6 +44,12 @@ A route parameter is a required argument. For `GET` and `DELETE` the other argum
 `[FromHeader]` members their headers); for `POST`, `PUT` and `PATCH` the arguments are the JSON body, exactly as the
 endpoint's binding expects (`[BindRequest]` is respected).
 
+`ExposeAsTool` belongs in each endpoint's own `Configure`: in an `EndpointGroup`, or twice on one endpoint, the host
+does not start.
+
+Clients on protocol revisions before `2026-07-28` require an output schema to be an object. For them a list or a
+value is wrapped as `{"result": ...}`, in the schema and in the structured content; newer clients get it as is.
+
 ## Writes must say what they do
 
 An endpoint that changes data (any method but `GET` and `HEAD`) must set `Destructive`, or the host does not start:
@@ -67,7 +73,7 @@ request delegate in process:
    ProblemDetails, with the request's scoped services.
 3. **The result**: a 2xx body is the tool's text content and, with an output schema, its structured content. A 4xx or
    5xx is a tool error with the status and the endpoint's answer, so a `400` validation problem tells the agent which
-   field to fix. An unhandled exception is logged and reaches the agent as `500` with no details.
+   field to fix; an error without a body (`404`, `409`) gets a sentence saying what it means and whether to retry. An unhandled exception is logged and reaches the agent as `500` with no details.
 
 Middleware runs once, for the `/mcp` request, not per tool: rate limiting, CORS, output caching or request timeouts
 configured on an endpoint do not apply to its tool calls. Put them on the MCP endpoint
@@ -160,5 +166,5 @@ var result = await client.CallToolAsync("invoices_get", new Dictionary<string, o
 
 - Stream endpoints (`StreamEndpoint<,>`) cannot be tools: the host does not start if one is exposed.
 - Form and file uploads are not tool arguments.
-- An `Idempotency-Key` is not generated for tool calls: an endpoint with `Idempotent(o => o.RequireKey = true)`
-  answers `400` to a tool call.
+- An `Idempotency-Key` is not generated for tool calls by this package: with
+  [Keel.Endpoints.Agents](agents.md#retries-that-do-not-repeat-a-write) it is, from the call itself.

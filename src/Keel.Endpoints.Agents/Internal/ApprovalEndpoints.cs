@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Keel.Endpoints.Agents.Internal;
 
@@ -35,11 +36,12 @@ internal static class ApprovalEndpoints
     {
         Secure(context.Response);
         var service = context.RequestServices.GetRequiredService<ApprovalService>();
+        var texts = context.RequestServices.GetRequiredService<IOptions<KeelAgentsOptions>>().Value.ApprovalTexts;
         var id = context.Request.RouteValues["id"] as string ?? string.Empty;
         var approval = await service.Store.GetAsync(id, context.RequestAborted);
         if (approval is null)
         {
-            await Page(context, StatusCodes.Status404NotFound, "Not found", "<p>There is no such approval. The link may be wrong, or the server was restarted.</p>", null);
+            await Page(context, StatusCodes.Status404NotFound, texts.Title, $"<p>{Html(texts.NotFound)}</p>", null);
             return;
         }
 
@@ -52,7 +54,7 @@ internal static class ApprovalEndpoints
                 return;
             }
 
-            await Page(context, status, "Not allowed", $"<p>{Html(error)}</p>", null);
+            await Page(context, status, texts.Title, $"<p>{Html(texts.NotAllowed)}</p><p class=\"detail\">{Html(error)}</p>", null);
             return;
         }
 
@@ -63,24 +65,26 @@ internal static class ApprovalEndpoints
         }
 
         var expired = approval.Expires <= context.RequestServices.GetRequiredService<TimeProvider>().GetUtcNow();
-        var state = expired ? "expired" : ApprovalService.Describe(approval.Status);
+        var state = expired ? texts.Expired : Label(texts, ApprovalService.Describe(approval.Status));
         var body = new StringBuilder()
+            .Append("<p class=\"question\">").Append(Html(texts.Question)).Append("</p>")
             .Append("<p class=\"message\">").Append(Html(approval.Message)).Append("</p>")
             .Append("<dl>")
-            .Append("<dt>Tool</dt><dd><code>").Append(Html(approval.Tool)).Append("</code></dd>")
-            .Append("<dt>Asked by</dt><dd>").Append(Html(approval.RequestedBy ?? "an anonymous caller")).Append("</dd>")
-            .Append("<dt>Status</dt><dd id=\"status\">").Append(state).Append("</dd>")
-            .Append("<dt>Approvals</dt><dd id=\"count\">").Append(approval.ApprovedBy.Count).Append(" of ").Append(approval.RequiredApprovals).Append("</dd>")
-            .Append("<dt>Expires</dt><dd>").Append(approval.Expires.ToString("u", CultureInfo.InvariantCulture)).Append("</dd>")
+            .Append("<dt>").Append(Html(texts.Tool)).Append("</dt><dd><code>").Append(Html(approval.Tool)).Append("</code></dd>")
+            .Append("<dt>").Append(Html(texts.AskedBy)).Append("</dt><dd>").Append(Html(approval.RequestedBy ?? texts.Anonymous)).Append("</dd>")
+            .Append("<dt>").Append(Html(texts.Status)).Append("</dt><dd id=\"status\">").Append(Html(state)).Append("</dd>")
+            .Append("<dt>").Append(Html(texts.Approvals)).Append("</dt><dd id=\"count\">")
+            .Append(Html(string.Format(CultureInfo.InvariantCulture, texts.Count, approval.ApprovedBy.Count, approval.RequiredApprovals))).Append("</dd>")
+            .Append("<dt>").Append(Html(texts.Expires)).Append("</dt><dd>").Append(approval.Expires.ToString("u", CultureInfo.InvariantCulture)).Append("</dd>")
             .Append("</dl>");
         if (!expired && approval.Status == AgentApprovalStatus.Pending)
         {
-            body.Append("<div class=\"actions\"><button type=\"button\" data-approve=\"true\">Approve</button> ")
-                .Append("<button type=\"button\" data-approve=\"false\" class=\"reject\">Reject</button></div>");
+            body.Append("<div class=\"actions\"><button type=\"button\" data-approve=\"true\">").Append(Html(texts.Allow)).Append("</button> ")
+                .Append("<button type=\"button\" data-approve=\"false\" class=\"deny\">").Append(Html(texts.Deny)).Append("</button></div>");
         }
 
         body.Append("<p id=\"result\" role=\"status\"></p>");
-        await Page(context, StatusCodes.Status200OK, "An AI agent asks for approval", body.ToString(), Script);
+        await Page(context, StatusCodes.Status200OK, texts.Title, body.ToString(), Script(texts));
     }
 
     private static async Task DecideAsync(HttpContext context)
@@ -175,19 +179,44 @@ internal static class ApprovalEndpoints
 
     private static string Html(string text) => HtmlEncoder.Default.Encode(text);
 
+    private static string Label(AgentApprovalTexts texts, string status) => status switch
+    {
+        "approved" => texts.Allowed,
+        "rejected" => texts.Denied,
+        _ => texts.Pending,
+    };
+
+    /// <summary>The script, with the status labels and the count format as JSON (escaped for a script element).</summary>
+    private static string Script(AgentApprovalTexts texts)
+    {
+        using var stream = new MemoryStream();
+        using (var w = new Utf8JsonWriter(stream))
+        {
+            w.WriteStartObject();
+            w.WriteString("pending", texts.Pending);
+            w.WriteString("approved", texts.Allowed);
+            w.WriteString("rejected", texts.Denied);
+            w.WriteString("count", texts.Count);
+            w.WriteEndObject();
+        }
+
+        return "const labels=" + Encoding.UTF8.GetString(stream.ToArray()) + ";" + ScriptBody;
+    }
+
     private const string Style =
         ":root{color-scheme:light dark;font-family:system-ui,sans-serif}body{margin:0;padding:16px}" +
         "main{max-width:36rem;margin:2rem auto}.message{font-size:1.25rem;padding:1rem;border-left:4px solid #b45309;background:color-mix(in srgb,#b45309 10%,transparent)}" +
         "dl{display:grid;grid-template-columns:auto 1fr;gap:.25rem 1rem}dt{font-weight:600}dd{margin:0}" +
         "button{font:inherit;padding:.6rem 1.4rem;margin-right:.5rem;border-radius:.4rem;border:1px solid currentColor;cursor:pointer}" +
-        "button[data-approve=true]{background:#166534;color:#fff;border-color:#166534}.reject{background:transparent}";
+        "button[data-approve=true]{background:#166534;color:#fff;border-color:#166534}.deny{background:transparent}" +
+        ".question{font-weight:600;margin-bottom:.25rem}.detail{opacity:.75;font-size:.9rem}";
 
-    private const string Script =
+    private const string ScriptBody =
         "for(const b of document.querySelectorAll('button[data-approve]')){b.addEventListener('click',async()=>{" +
         "for(const x of document.querySelectorAll('button'))x.disabled=true;" +
         "const r=await fetch(location.pathname,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin'," +
         "body:JSON.stringify({approve:b.dataset.approve==='true'})});const j=await r.json();" +
-        "document.getElementById('result').textContent=j.result||'';if(j.status)document.getElementById('status').textContent=j.status;" +
-        "if(j.required!==undefined)document.getElementById('count').textContent=j.approvals+' of '+j.required;" +
+        "document.getElementById('result').textContent=j.result||'';if(j.status)document.getElementById('status').textContent=labels[j.status]||j.status;" +
+        "if(j.required!==undefined)document.getElementById('count').textContent=labels.count.replace('{0}',j.approvals).replace('{1}',j.required);" +
         "if(r.status>=500){for(const x of document.querySelectorAll('button'))x.disabled=false;}});}";
 }

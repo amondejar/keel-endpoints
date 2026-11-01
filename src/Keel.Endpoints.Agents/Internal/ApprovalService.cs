@@ -119,11 +119,12 @@ internal sealed class ApprovalService(
                 approve ? AgentDecision.ApprovalGranted : AgentDecision.ApprovalRejected,
                 approval.Message, approval.ArgumentsHash, null), cancellationToken);
 
+            var texts = options.Value.ApprovalTexts;
             var message = updated.Status switch
             {
-                AgentApprovalStatus.Approved => "Approved. The agent's next call will run it.",
-                AgentApprovalStatus.Rejected => "Rejected. It will not run.",
-                _ => $"Your approval is recorded: {updated.ApprovedBy.Count} of {updated.RequiredApprovals}.",
+                AgentApprovalStatus.Approved => texts.AllowedResult,
+                AgentApprovalStatus.Rejected => texts.DeniedResult,
+                _ => string.Format(System.Globalization.CultureInfo.InvariantCulture, texts.RecordedResult, updated.ApprovedBy.Count, updated.RequiredApprovals),
             };
             return new(StatusCodes.Status200OK, message, updated);
         }

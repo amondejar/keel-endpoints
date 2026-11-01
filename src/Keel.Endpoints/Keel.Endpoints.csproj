@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Keel.Endpoints.Tests" />
+    <InternalsVisibleTo Include="Keel.Endpoints.Mcp" />
   </ItemGroup>
 
   <!-- Ship the analyzers inside this package, so one reference brings them along. -->

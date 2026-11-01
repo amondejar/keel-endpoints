@@ -20,6 +20,7 @@ internal sealed partial class ConfirmationFilter(
     IAgentAuditSink audit,
     IOptions<KeelAgentsOptions> options,
     IOptions<JsonOptions> json,
+    IOptions<Keel.Endpoints.Idempotency.KeelIdempotencyOptions> idempotency,
     TimeProvider time,
     ILogger<ConfirmationFilter> logger)
 {
@@ -35,6 +36,13 @@ internal sealed partial class ConfirmationFilter(
             var arguments = context.Params?.Arguments;
             var hash = ConfirmationTokens.Hash(arguments);
             var user = Identity.Of(context.User);
+
+            // The same write repeated by the model is answered from the idempotency store, not done twice.
+            if (!tool.ReadOnly && options.Value.IdempotencyKeys && endpoint.Metadata.GetMetadata<Keel.Endpoints.Idempotency.IdempotencyMetadata>() is not null)
+            {
+                context.Items[Keel.Endpoints.Mcp.Internal.McpToolCall.HeadersItem] =
+                    new Dictionary<string, string> { [idempotency.Value.HeaderName] = "agent-" + hash };
+            }
 
             if (endpoint.Metadata.GetMetadata<ApprovalMetadata>() is { } approval)
             {

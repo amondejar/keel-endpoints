@@ -6,6 +6,25 @@ and the project uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Keel.Endpoints.Agents: retries that do not repeat a write.** Agent calls to `Idempotent()` endpoints carry an
+  idempotency key derived from the tool, the arguments and the caller (`IdempotencyKeys`, on by default), so a
+  model that repeats a write gets the stored result; `RequireKey` endpoints work as tools. Keel.Endpoints.Agents now
+  depends on Keel.Endpoints.Idempotency.
+- **Keel.Endpoints.Agents: the approval page in your language.** `KeelAgentsOptions.ApprovalTexts`, with
+  `AgentApprovalTexts.Spanish` built in.
+- **Keel.Endpoints.Mcp**: a replayed idempotent response says so in the tool result.
+
+### Changed
+- **Keel.Endpoints.Agents**: the approval page asks *Allow the agent to do this?* with **Allow** / **Deny**, instead
+  of Approve / Reject, which read as the opposite when the action itself is a rejection.
+- **Keel.Endpoints.Mcp**: tool errors without a body (`404`, `409`...) explain what they mean for the agent.
+- **Keel.Endpoints.Mcp**: for clients before protocol `2026-07-28`, non-object output schemas and their structured
+  content are wrapped as `{"result": ...}`, as those revisions require.
+- **Keel.Endpoints.Mcp**: `ExposeAsTool` in an `EndpointGroup`, or twice on one endpoint, stops the host.
+
+## [1.0.0-rc.6] - 2026-11-01
+
+### Added
 - **Keel.Endpoints.Agents: approval by other people.** `RequireApproval(message)` / `RequireApproval<TRequest>(r => ...)`:
   the agent gets an approval link instead of a result; approvers decide on the page `MapKeelApprovals()` serves
   (`/approvals/{id}`), and the agent's next identical call runs the endpoint once. Four eyes by default
