@@ -113,7 +113,7 @@ internal static class McpTests
             var invalid = await client.CallToolAsync("invoices_create", new Dictionary<string, object?> { ["customer"] = "Acme", ["amount"] = 0 });
 
             Assert.Equal(true, missing.IsError);
-            Assert.True(Text(missing).StartsWith("404", StringComparison.Ordinal));
+            Assert.True(Text(missing).StartsWith("404", StringComparison.Ordinal) && Text(missing).Contains("nothing matches these arguments"), Text(missing));
             Assert.Equal(true, invalid.IsError);
             Assert.True(Text(invalid).StartsWith("400", StringComparison.Ordinal) && Text(invalid).Contains("Amount", StringComparison.OrdinalIgnoreCase), Text(invalid));
             Assert.Equal(2, app.Services.GetRequiredService<InvoiceStore>().All.Count);
@@ -275,6 +275,43 @@ internal static class McpTests
             Assert.True(error.Message.Contains("reverse-DNS"), error.Message);
         });
 
+        Test("MCP: before protocol 2026-07-28, a non-object output is wrapped as {result}", async () =>
+        {
+            await using var app = await StartAsync();
+            await using var legacy = await Client(app, protocolVersion: "2025-11-25");
+            await using var current = await Client(app);
+
+            var oldTools = (await legacy.ListToolsAsync()).ToDictionary(t => t.Name, t => t.ProtocolTool);
+            var newTools = (await current.ListToolsAsync()).ToDictionary(t => t.Name, t => t.ProtocolTool);
+            var wrapped = oldTools["invoices_search"].OutputSchema!.Value;
+
+            Assert.Equal("object", wrapped.GetProperty("type").GetString());
+            Assert.Equal("array", wrapped.GetProperty("properties").GetProperty("result").GetProperty("type").GetString());
+            Assert.Equal("array", newTools["invoices_search"].OutputSchema!.Value.GetProperty("type").GetString());
+            Assert.Equal("object", oldTools["invoices_get"].OutputSchema!.Value.GetProperty("type").GetString());
+            Assert.True(oldTools["invoices_get"].OutputSchema!.Value.GetProperty("properties").TryGetProperty("customer", out _));
+
+            var result = await legacy.CallToolAsync("invoices_search", new Dictionary<string, object?> { ["customer"] = "Globex" });
+            Assert.Equal(1, result.StructuredContent!.Value.GetProperty("result").GetArrayLength());
+            var natural = await current.CallToolAsync("invoices_search", new Dictionary<string, object?> { ["customer"] = "Globex" });
+            Assert.Equal(JsonValueKind.Array, natural.StructuredContent!.Value.ValueKind);
+        });
+
+        Test("MCP: ExposeAsTool twice, or in an endpoint group, stops the host", async () =>
+        {
+            var twice = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            {
+                await using var app = await StartAsync(api => api.MapEndpoint<McpFixtures.Broken.Twice.Endpoint>());
+            });
+            Assert.True(twice.Message.Contains("more than once"), twice.Message);
+
+            var grouped = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            {
+                await using var app = await StartAsync(api => api.MapEndpoint<McpFixtures.Grouped.Endpoint>());
+            });
+            Assert.True(grouped.Message.Contains("endpoint group"), grouped.Message);
+        });
+
         Test("MCP: tool names are the operation names in snake case", () =>
         {
             Assert.Equal("invoices_get", ToolNames.SnakeCase("InvoicesGet"));
@@ -349,7 +386,7 @@ internal static class McpTests
         return app;
     }
 
-    private static Task<McpClient> Client(WebApplication app, string? user = null, string? role = null)
+    private static Task<McpClient> Client(WebApplication app, string? user = null, string? role = null, string? protocolVersion = null)
     {
         var headers = new Dictionary<string, string>();
         if (user is not null) headers["X-User"] = user;
@@ -358,6 +395,6 @@ internal static class McpTests
         {
             Endpoint = new Uri(app.Urls.First() + "/mcp"),
             AdditionalHeaders = headers,
-        }));
+        }), new McpClientOptions { ProtocolVersion = protocolVersion });
     }
 }

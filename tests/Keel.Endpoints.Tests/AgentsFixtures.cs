@@ -160,3 +160,23 @@ namespace Keel.Endpoints.Tests.AgentsFixtures.Payments.Close
         }
     }
 }
+
+namespace Keel.Endpoints.Tests.AgentsFixtures.Payments.Charge
+{
+    public sealed record ChargeCard(int Id, decimal Amount);
+
+    // Idempotent and requiring a key: agent calls get one derived from the call.
+    [Post("payments/charge"), AllowAnonymous]
+    public sealed class Endpoint(PaymentLedger ledger) : Endpoint<ChargeCard>
+    {
+        public override void Configure(EndpointOptions options) => options
+            .ExposeAsTool("Charges a card.", tool => tool.Destructive = false)
+            .Idempotent(o => o.RequireKey = true);
+
+        public override Task HandleAsync(ChargeCard request, CancellationToken ct)
+        {
+            ledger.Record($"charge {request.Id} {request.Amount}");
+            return Task.CompletedTask;
+        }
+    }
+}

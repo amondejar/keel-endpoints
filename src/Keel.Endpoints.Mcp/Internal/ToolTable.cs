@@ -16,6 +16,12 @@ internal sealed class McpTool
 {
     public required string Name { get; init; }
     public required Tool Protocol { get; init; }
+
+    /// <summary>The tool for clients before protocol 2026-07-28, whose output schema must be an object.</summary>
+    public required Tool LegacyProtocol { get; init; }
+
+    /// <summary>Whether <see cref="LegacyProtocol"/> wraps the output as <c>{"result": ...}</c>.</summary>
+    public required bool WrapsResult { get; init; }
     public required RouteEndpoint Endpoint { get; init; }
     public required string Method { get; init; }
     public required bool UsesBody { get; init; }
@@ -77,6 +83,12 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
                 continue;
             }
 
+            if (endpoint.Metadata.GetOrderedMetadata<McpToolMetadata>().Count > 1)
+            {
+                errors.Add($"{where}: ExposeAsTool is applied more than once. Call it once, in the endpoint's own Configure.");
+                continue;
+            }
+
             var shape = EndpointShape.Of(keel.EndpointType);
             if (shape.IsStream)
             {
@@ -123,13 +135,14 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
                 }
             }
 
+            var outputSchema = shape.Response is null ? null : Schemas.Output(options.GetTypeInfo(shape.Response));
             var protocol = new Tool
             {
                 Name = name,
                 Title = exposed.Options.Title,
                 Description = exposed.Description,
                 InputSchema = Schemas.Input(request, routeParameters),
-                OutputSchema = shape.Response is null ? null : Schemas.Output(options.GetTypeInfo(shape.Response)),
+                OutputSchema = outputSchema,
                 Annotations = new ToolAnnotations
                 {
                     Title = exposed.Options.Title,
@@ -140,10 +153,26 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
                 },
             };
 
+            // Before 2026-07-28 an output schema must be an object: wrap others as {"result": ...} for those clients.
+            var wraps = outputSchema is { } natural && !Schemas.IsObject(natural);
+            var legacy = wraps
+                ? new Tool
+                {
+                    Name = protocol.Name,
+                    Title = protocol.Title,
+                    Description = protocol.Description,
+                    InputSchema = protocol.InputSchema,
+                    OutputSchema = Schemas.WrapResult(outputSchema!.Value),
+                    Annotations = protocol.Annotations,
+                }
+                : protocol;
+
             tools[name] = new McpTool
             {
                 Name = name,
                 Protocol = protocol,
+                LegacyProtocol = legacy,
+                WrapsResult = wraps,
                 Endpoint = endpoint,
                 Method = method,
                 UsesBody = UsesBody(method, shape.Request),

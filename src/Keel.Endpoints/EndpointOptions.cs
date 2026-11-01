@@ -10,6 +10,9 @@ public sealed class EndpointOptions
 {
     internal List<Action<RouteHandlerBuilder>> Conventions { get; } = [];
 
+    /// <summary>The group these options configure, or <see langword="null"/> for an endpoint's own options.</summary>
+    internal Type? Group { get; init; }
+
     /// <summary>Overrides the contract's default binding for this endpoint.</summary>
     public RequestBinding? Binding { get; set; }
 

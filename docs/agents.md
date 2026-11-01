@@ -112,6 +112,35 @@ builder.Services.AddKeelAgents(o => o.WhenClientCannotConfirm = ConfirmationFall
 app.MapKeelApprovals();
 ```
 
+### The page in your language
+
+The page asks *Allow the agent to do this?* with **Allow** and **Deny**: it decides about the agent's action, so
+"deny" a rejection means it is not rejected. Its texts are `AgentApprovalTexts`; Spanish is built in:
+
+```csharp
+builder.Services.AddKeelAgents(o => o.ApprovalTexts = AgentApprovalTexts.Spanish);
+```
+
+Or set your own: `o.ApprovalTexts = new() { Allow = "...", Deny = "...", ... }`.
+
+## Retries that do not repeat a write
+
+A model that gets a timeout, or loses track, calls the same tool again with the same arguments. For an endpoint that
+is `Idempotent()` (Keel.Endpoints.Idempotency), every agent call carries an idempotency key derived from the tool,
+its arguments and the caller, so the repeat is answered from the store: same result, nothing done twice, and a note
+in the tool result saying so. `RequireKey = true` endpoints work as tools too.
+
+```csharp
+builder.Services.AddKeelIdempotency();
+builder.Services.AddKeelAgents();
+
+options.ExposeAsTool("Charges a card.", tool => tool.Destructive = false)
+       .Idempotent(o => o.Retention = TimeSpan.FromMinutes(30));
+```
+
+Doing the same thing twice on purpose takes different arguments (a reference, a date), or waiting for the
+endpoint's `Retention`. Turn it off with `IdempotencyKeys = false`.
+
 ## Audit
 
 Every agent call to a tool that changes data, and every step of a confirmation, is an `AgentAuditEntry`: time, tool,
@@ -127,6 +156,3 @@ sink:
 builder.Services.AddSingleton<IAgentAuditSink, DatabaseAuditSink>();
 ```
 
-## Not yet
-
-- Automatic idempotency keys for tool calls, so an agent's retry does not repeat a write.

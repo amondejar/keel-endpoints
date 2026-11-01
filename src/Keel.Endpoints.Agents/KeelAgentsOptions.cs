@@ -28,6 +28,17 @@ public sealed class KeelAgentsOptions
     /// </summary>
     public ConfirmationFallback WhenClientCannotConfirm { get; set; } = ConfirmationFallback.Refuse;
 
+    /// <summary>
+    /// Gives every agent call to an <c>Idempotent()</c> endpoint an idempotency key derived from the tool, its arguments
+    /// and the caller (Keel.Endpoints.Idempotency). A model that repeats the same write, after a timeout or by mistake,
+    /// gets the stored result instead of doing it twice; doing the same thing again on purpose takes different
+    /// arguments, or waiting for the endpoint's retention. Default <see langword="true"/>.
+    /// </summary>
+    public bool IdempotencyKeys { get; set; } = true;
+
+    /// <summary>The texts of the approval page: <see cref="AgentApprovalTexts.Spanish"/>, or your own.</summary>
+    public AgentApprovalTexts ApprovalTexts { get; set; } = new();
+
     /// <summary>How long an approval stays open. Default 1 day.</summary>
     public TimeSpan ApprovalLifetime { get; set; } = TimeSpan.FromDays(1);
 

@@ -19,6 +19,13 @@ public static class McpEndpointOptionsExtensions
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentException.ThrowIfNullOrWhiteSpace(description);
+        if (options.Group is { } group)
+        {
+            throw new InvalidOperationException(
+                $"Keel.Endpoints.Mcp: ExposeAsTool is called in the endpoint group {group.FullName}, which would expose every endpoint " +
+                "it covers as one tool name. Call it in each endpoint's own Configure.");
+        }
+
         var tool = new McpToolOptions();
         configure?.Invoke(tool);
         var metadata = new McpToolMetadata(description.Trim(), tool);

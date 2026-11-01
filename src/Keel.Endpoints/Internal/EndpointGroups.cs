@@ -30,7 +30,7 @@ internal static class EndpointGroups
     {
         foreach (var group in groups)
         {
-            var options = new EndpointOptions();
+            var options = new EndpointOptions { Group = group.GetType() };
             group.Configure(options);
 
             if (options.Binding is not null || options.StreamFormat != StreamFormat.JsonArray || options.EventType is not null)

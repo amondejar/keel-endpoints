@@ -28,11 +28,12 @@ internal sealed class ToolInvoker(ToolTable table, IOptions<KeelMcpOptions> opti
     public async ValueTask<ListToolsResult> ListAsync(RequestContext<ListToolsRequestParams> request, CancellationToken cancellationToken)
     {
         var caller = Caller(request);
+        var legacy = IsLegacy(request.Server.NegotiatedProtocolVersion);
         var tools = new List<Tool>();
         foreach (var tool in table.Tools.Values.OrderBy(t => t.Name, StringComparer.Ordinal))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (!options.Value.ListAuthorizedToolsOnly || (await AuthorizeAsync(tool, caller)).Allowed) tools.Add(tool.Protocol);
+            if (!options.Value.ListAuthorizedToolsOnly || (await AuthorizeAsync(tool, caller)).Allowed) tools.Add(legacy ? tool.LegacyProtocol : tool.Protocol);
         }
 
         return new ListToolsResult { Tools = tools };
@@ -51,6 +52,11 @@ internal sealed class ToolInvoker(ToolTable table, IOptions<KeelMcpOptions> opti
         if (!authorization.Allowed) return Error(authorization.Status, authorization.Message);
 
         var context = Request(tool, request.Params?.Arguments, caller, cancellationToken);
+        if (request.Items.TryGetValue(McpToolCall.HeadersItem, out var extra) && extra is IReadOnlyDictionary<string, string> headers)
+        {
+            foreach (var (header, value) in headers) context.Request.Headers[header] = value;
+        }
+
         try
         {
             await tool.Endpoint.RequestDelegate!(context);
@@ -73,8 +79,12 @@ internal sealed class ToolInvoker(ToolTable table, IOptions<KeelMcpOptions> opti
             return Error(StatusCodes.Status500InternalServerError, "The operation failed with an unexpected error.");
         }
 
-        return Result(tool, context);
+        return Result(tool, context, wrap: tool.WrapsResult && IsLegacy(request.Server.NegotiatedProtocolVersion));
     }
+
+    /// <summary>Protocol revisions before 2026-07-28 require object output schemas (and structured content).</summary>
+    private static bool IsLegacy(string? protocolVersion) =>
+        protocolVersion is null || string.CompareOrdinal(protocolVersion, "2026-07-28") < 0;
 
     /// <summary>The HTTP request the MCP message came in (stateless HTTP), or a stand-in with the message's identity.</summary>
     private static HttpContext Caller<TParams>(RequestContext<TParams> request)
@@ -178,23 +188,30 @@ internal sealed class ToolInvoker(ToolTable table, IOptions<KeelMcpOptions> opti
         public bool CanHaveBody => true;
     }
 
-    private static CallToolResult Result(McpTool tool, HttpContext context)
+    private static CallToolResult Result(McpTool tool, HttpContext context, bool wrap)
     {
         var status = context.Response.StatusCode;
         var body = Encoding.UTF8.GetString(((MemoryStream)context.Response.Body).ToArray());
-        if (status is < 200 or >= 300) return Error(status, body.Length > 0 ? body : ReasonPhrases.GetReasonPhrase(status));
+        if (status is < 200 or >= 300) return Error(status, body.Length > 0 ? body : Explain(status));
 
         var result = new CallToolResult
         {
             Content = [new TextContentBlock { Text = body.Length > 0 ? body : $"{status} {ReasonPhrases.GetReasonPhrase(status)}" }],
         };
 
+        // Keel.Endpoints.Idempotency answered from its store: say so, or the agent may think it did it twice.
+        if (context.Response.Headers[McpToolCall.ReplayedHeader] == "true")
+        {
+            result.Content.Add(new TextContentBlock { Text = "Note: this call had already been made with the same arguments; this is its stored result, and nothing was done again." });
+        }
+
         if (body.Length > 0 && tool.Protocol.OutputSchema is not null && context.Response.ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true)
         {
             try
             {
                 using var document = JsonDocument.Parse(body);
-                result.StructuredContent = document.RootElement.Clone();
+                var value = document.RootElement.Clone();
+                result.StructuredContent = wrap ? Wrapped(value) : value;
             }
             catch (JsonException)
             {
@@ -204,6 +221,36 @@ internal sealed class ToolInvoker(ToolTable table, IOptions<KeelMcpOptions> opti
 
         return result;
     }
+
+    private static JsonElement Wrapped(JsonElement value)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            writer.WritePropertyName("result");
+            value.WriteTo(writer);
+            writer.WriteEndObject();
+        }
+
+        using var document = JsonDocument.Parse(stream.ToArray());
+        return document.RootElement.Clone();
+    }
+
+    /// <summary>What an error without a body means, for the agent: a bare "404" does not say whether to retry.</summary>
+    private static string Explain(int status) => status switch
+    {
+        StatusCodes.Status400BadRequest => "the arguments are not valid for this tool.",
+        StatusCodes.Status401Unauthorized => "the caller is not authenticated.",
+        StatusCodes.Status403Forbidden => "the caller is not allowed to do this.",
+        StatusCodes.Status404NotFound => "nothing matches these arguments (an id that does not exist?). Check them before trying again.",
+        StatusCodes.Status409Conflict => "this conflicts with the current state (already done, or not allowed in this state). Do not retry as is.",
+        StatusCodes.Status410Gone => "it no longer exists.",
+        StatusCodes.Status412PreconditionFailed => "a precondition failed: the data changed since it was read.",
+        StatusCodes.Status422UnprocessableEntity => "the request is understood but cannot be processed with these arguments.",
+        StatusCodes.Status429TooManyRequests => "too many calls: wait before trying again.",
+        _ => ReasonPhrases.GetReasonPhrase(status),
+    };
 
     /// <summary>A failed call, as the agent sees it: the status and the endpoint's own answer (ProblemDetails).</summary>
     private static CallToolResult Error(int status, string detail) => new()

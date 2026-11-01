@@ -20,6 +20,8 @@ interface Keel.Endpoints.Agents.IAgentAuditSink
 public Keel.Endpoints.Agents.AgentApproval()
 public Keel.Endpoints.Agents.AgentApprovalOptions()
 public Keel.Endpoints.Agents.AgentApprovalStatus Keel.Endpoints.Agents.AgentApproval.Status { get; init; }
+public Keel.Endpoints.Agents.AgentApprovalTexts Keel.Endpoints.Agents.KeelAgentsOptions.ApprovalTexts { get; set; }
+public Keel.Endpoints.Agents.AgentApprovalTexts()
 public Keel.Endpoints.Agents.AgentAuditEntry(System.DateTimeOffset Time, string Tool, string? User, Keel.Endpoints.Agents.AgentDecision Decision, string? Summary, string ArgumentsHash, bool? Succeeded)
 public Keel.Endpoints.Agents.AgentDecision Keel.Endpoints.Agents.AgentAuditEntry.Decision { get; init; }
 public Keel.Endpoints.Agents.ConfirmationFallback Keel.Endpoints.Agents.KeelAgentsOptions.WhenClientCannotConfirm { get; set; }
@@ -42,6 +44,7 @@ public bool Keel.Endpoints.Agents.AgentApproval.RequesterOnly { get; init; }
 public bool Keel.Endpoints.Agents.AgentApprovalOptions.RequesterMayApprove { get; set; }
 public bool Keel.Endpoints.Agents.AgentAuditEntry.Equals(Keel.Endpoints.Agents.AgentAuditEntry? other)
 public bool Keel.Endpoints.Agents.KeelAgentsOptions.ConfirmDestructiveTools { get; set; }
+public bool Keel.Endpoints.Agents.KeelAgentsOptions.IdempotencyKeys { get; set; }
 public bool? Keel.Endpoints.Agents.AgentAuditEntry.Succeeded { get; init; }
 public int Keel.Endpoints.Agents.AgentApproval.RequiredApprovals { get; init; }
 public int Keel.Endpoints.Agents.AgentApproval.Version { get; init; }
@@ -58,6 +61,7 @@ public required string Keel.Endpoints.Agents.AgentApproval.ArgumentsHash { get; 
 public required string Keel.Endpoints.Agents.AgentApproval.Id { get; init; }
 public required string Keel.Endpoints.Agents.AgentApproval.Message { get; init; }
 public required string Keel.Endpoints.Agents.AgentApproval.Tool { get; init; }
+public static Keel.Endpoints.Agents.AgentApprovalTexts Keel.Endpoints.Agents.AgentApprovalTexts.Spanish { get; }
 public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.RequireApproval(this Keel.Endpoints.EndpointOptions options, string message, System.Action<Keel.Endpoints.Agents.AgentApprovalOptions>? configure = null)
 public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.RequireApproval<TRequest>(this Keel.Endpoints.EndpointOptions options, System.Func<TRequest, string> message, System.Action<Keel.Endpoints.Agents.AgentApprovalOptions>? configure = null)
 public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.RequireConfirmation(this Keel.Endpoints.EndpointOptions options, string message)
@@ -69,6 +73,26 @@ public static bool Keel.Endpoints.Agents.AgentApproval.op_Equality(Keel.Endpoint
 public static bool Keel.Endpoints.Agents.AgentApproval.op_Inequality(Keel.Endpoints.Agents.AgentApproval? left, Keel.Endpoints.Agents.AgentApproval? right)
 public static bool Keel.Endpoints.Agents.AgentAuditEntry.op_Equality(Keel.Endpoints.Agents.AgentAuditEntry? left, Keel.Endpoints.Agents.AgentAuditEntry? right)
 public static bool Keel.Endpoints.Agents.AgentAuditEntry.op_Inequality(Keel.Endpoints.Agents.AgentAuditEntry? left, Keel.Endpoints.Agents.AgentAuditEntry? right)
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Allow { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Allowed { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.AllowedResult { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Anonymous { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Approvals { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.AskedBy { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Count { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Denied { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.DeniedResult { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Deny { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Expired { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Expires { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.NotAllowed { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.NotFound { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Pending { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Question { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.RecordedResult { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Status { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Title { get; init; }
+public string Keel.Endpoints.Agents.AgentApprovalTexts.Tool { get; init; }
 public string Keel.Endpoints.Agents.AgentAuditEntry.ArgumentsHash { get; init; }
 public string Keel.Endpoints.Agents.AgentAuditEntry.Tool { get; init; }
 public string? Keel.Endpoints.Agents.AgentApproval.Policy { get; init; }
@@ -80,6 +104,7 @@ public string? Keel.Endpoints.Agents.AgentAuditEntry.User { get; init; }
 public void Keel.Endpoints.Agents.AgentAuditEntry.Deconstruct(out System.DateTimeOffset Time, out string Tool, out string? User, out Keel.Endpoints.Agents.AgentDecision Decision, out string? Summary, out string ArgumentsHash, out bool? Succeeded)
 sealed class Keel.Endpoints.Agents.AgentApproval : System.IEquatable<Keel.Endpoints.Agents.AgentApproval>
 sealed class Keel.Endpoints.Agents.AgentApprovalOptions
+sealed class Keel.Endpoints.Agents.AgentApprovalTexts
 sealed class Keel.Endpoints.Agents.AgentAuditEntry : System.IEquatable<Keel.Endpoints.Agents.AgentAuditEntry>
 sealed class Keel.Endpoints.Agents.KeelAgentsOptions
 static class Keel.Endpoints.AgentEndpointOptionsExtensions

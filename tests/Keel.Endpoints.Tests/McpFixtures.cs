@@ -160,3 +160,30 @@ namespace Keel.Endpoints.Tests.McpFixtures.Broken.Same
         public override Task<string> HandleAsync(CancellationToken ct) => Task.FromResult("two");
     }
 }
+
+namespace Keel.Endpoints.Tests.McpFixtures.Broken.Twice
+{
+    [Get("twice"), AllowAnonymous]
+    public sealed class Endpoint : EndpointWithoutRequest<string>
+    {
+        public override void Configure(EndpointOptions options) =>
+            options.ExposeAsTool("Once.").ExposeAsTool("Twice.");
+
+        public override Task<string> HandleAsync(CancellationToken ct) => Task.FromResult("x");
+    }
+}
+
+namespace Keel.Endpoints.Tests.McpFixtures.Grouped
+{
+    // A group must not expose its endpoints as tools.
+    public sealed class GroupedGroup : EndpointGroup
+    {
+        public override void Configure(EndpointOptions options) => options.AllowAnonymous().ExposeAsTool("Everything.");
+    }
+
+    [Get("grouped")]
+    public sealed class Endpoint : EndpointWithoutRequest<string>
+    {
+        public override Task<string> HandleAsync(CancellationToken ct) => Task.FromResult("x");
+    }
+}

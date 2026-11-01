@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Keel.Endpoints.Mcp\Keel.Endpoints.Mcp.csproj" />
+    <ProjectReference Include="..\Keel.Endpoints.Idempotency\Keel.Endpoints.Idempotency.csproj" />
   </ItemGroup>
 
   <ItemGroup>
