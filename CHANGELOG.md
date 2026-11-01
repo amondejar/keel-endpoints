@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0-rc.6] - 2026-11-01
 
 ### Added
 - **Keel.Endpoints.Agents: approval by other people.** `RequireApproval(message)` / `RequireApproval<TRequest>(r => ...)`:
