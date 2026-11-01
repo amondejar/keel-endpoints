@@ -23,6 +23,19 @@ jobs:
           dotnet-version: 10.0.x
       - name: Version from tag
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      # Nothing is published unless the tagged commit is the release commit: the release PR sets the version and dates
+      # the changelog section that becomes the release notes.
+      - name: Check the release PR is in the tagged commit
+        run: |
+          if ! grep -q "^## \[$VERSION\]" CHANGELOG.md; then
+            echo "::error title=Release PR missing::CHANGELOG.md has no '## [$VERSION]' section at $GITHUB_REF_NAME. Merge the release PR first, then tag main again (git tag -d $GITHUB_REF_NAME && git push origin :refs/tags/$GITHUB_REF_NAME)."
+            exit 1
+          fi
+          suffix="${VERSION#*-}"
+          if [ "$suffix" != "$VERSION" ] && ! grep -q "<VersionSuffix>$suffix</VersionSuffix>" Directory.Build.props; then
+            echo "::error title=Release PR missing::Directory.Build.props does not prepare $VERSION. Merge the release PR first."
+            exit 1
+          fi
       - run: dotnet build -c Release -p:Version=$VERSION
       - run: dotnet run -c Release --no-build --project tests/Keel.Endpoints.Tests
       - run: dotnet pack -c Release --no-build -p:Version=$VERSION -o artifacts
