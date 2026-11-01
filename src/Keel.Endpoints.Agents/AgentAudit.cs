@@ -17,6 +17,18 @@ public enum AgentDecision
 
     /// <summary>A confirmation was needed and could not be obtained (the client cannot ask, or the answer was not valid for this call): the tool did not run.</summary>
     Refused,
+
+    /// <summary>An approval was requested: the agent got a link; the tool has not run.</summary>
+    ApprovalRequested,
+
+    /// <summary>An approver approved (the entry's user is the approver). The tool runs once enough have.</summary>
+    ApprovalGranted,
+
+    /// <summary>An approver rejected (the entry's user is the approver): the tool will not run.</summary>
+    ApprovalRejected,
+
+    /// <summary>The approved call ran.</summary>
+    Approved,
 }
 
 /// <summary>One entry of the audit trail.</summary>

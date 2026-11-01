@@ -116,3 +116,47 @@ namespace Keel.Endpoints.Tests.AgentsFixtures.Payments.List
         public override Task<string[]> HandleAsync(CancellationToken ct) => Task.FromResult<string[]>(["1", "2"]);
     }
 }
+
+namespace Keel.Endpoints.Tests.AgentsFixtures.Payments.Payout
+{
+    public sealed record Payout(string To, decimal Amount);
+
+    // Approved by someone other than the caller (the default).
+    [Post("payments/payout"), AllowAnonymous]
+    public sealed class Endpoint(PaymentLedger ledger) : Endpoint<Payout>
+    {
+        public override void Configure(EndpointOptions options) => options
+            .ExposeAsTool("Pays money out to a supplier.", tool => tool.Destructive = false)
+            .RequireApproval<Payout>(r => $"Pay {r.Amount} EUR to {r.To} <now>");
+
+        public override Task HandleAsync(Payout request, CancellationToken ct)
+        {
+            ledger.Record($"payout {request.To} {request.Amount}");
+            return Task.CompletedTask;
+        }
+    }
+}
+
+namespace Keel.Endpoints.Tests.AgentsFixtures.Payments.Close
+{
+    public sealed record CloseAccount(int Id);
+
+    // Two supervisors, neither of them the caller.
+    [Delete("payments/{id}/account"), AllowAnonymous]
+    public sealed class Endpoint(PaymentLedger ledger) : Endpoint<CloseAccount>
+    {
+        public override void Configure(EndpointOptions options) => options
+            .ExposeAsTool("Closes a payment account.", tool => tool.Destructive = true)
+            .RequireApproval("Close a payment account", approval =>
+            {
+                approval.Approvals = 2;
+                approval.Policy = "supervisors";
+            });
+
+        public override Task HandleAsync(CloseAccount request, CancellationToken ct)
+        {
+            ledger.Record($"close {request.Id}");
+            return Task.CompletedTask;
+        }
+    }
+}

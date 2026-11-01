@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Json;
@@ -17,6 +16,7 @@ namespace Keel.Endpoints.Agents.Internal;
 internal sealed partial class ConfirmationFilter(
     AgentToolIndex index,
     ConfirmationTokens tokens,
+    ApprovalService approvals,
     IAgentAuditSink audit,
     IOptions<KeelAgentsOptions> options,
     IOptions<JsonOptions> json,
@@ -34,7 +34,16 @@ internal sealed partial class ConfirmationFilter(
 
             var arguments = context.Params?.Arguments;
             var hash = ConfirmationTokens.Hash(arguments);
-            var user = UserOf(context.User);
+            var user = Identity.Of(context.User);
+
+            if (endpoint.Metadata.GetMetadata<ApprovalMetadata>() is { } approval)
+            {
+                var o = approval.Options;
+                return await ApproveAsync(context, next, name, user, hash, Message(approval.Message, tool, arguments),
+                    new ApprovalSettings(o.Approvals, o.Policy, o.RequesterMayApprove, RequesterOnly: false, o.Lifetime ?? options.Value.ApprovalLifetime),
+                    cancellationToken);
+            }
+
             var confirmation = endpoint.Metadata.GetMetadata<ConfirmationMetadata>();
             var required = confirmation?.Required ?? (options.Value.ConfirmDestructiveTools && tool.Destructive == true);
 
@@ -45,7 +54,7 @@ internal sealed partial class ConfirmationFilter(
                 return result;
             }
 
-            var summary = Message(confirmation, tool, arguments);
+            var summary = Message(confirmation?.Message, tool, arguments);
 
             // The retry: the user's answer and the state we signed.
             if (context.Params?.RequestState is { } state && context.Params.InputResponses is { } responses && responses.TryGetValue(InputKey, out var response))
@@ -71,8 +80,20 @@ internal sealed partial class ConfirmationFilter(
 
             if (!context.Server.IsMrtrSupported || context.Server.ClientCapabilities is { Elicitation: null })
             {
+                if (options.Value.WhenClientCannotConfirm == ConfirmationFallback.Approval)
+                {
+                    // The same user confirms through a link instead.
+                    return await ApproveAsync(context, next, name, user, hash, summary,
+                        new ApprovalSettings(1, null, RequesterMayApprove: true, RequesterOnly: true, options.Value.ApprovalLifetime),
+                        cancellationToken);
+                }
+
                 await Audit(name, user, AgentDecision.Refused, summary, hash, null, cancellationToken);
-                return Error("This action needs the user's confirmation, and this MCP client cannot ask for it (elicitation over protocol 2026-07-28). Nothing was done.");
+                var protocol = context.Server.NegotiatedProtocolVersion ?? "unknown";
+                var why = context.Server.IsMrtrSupported
+                    ? "it does not support elicitation"
+                    : $"it connected with protocol {protocol}, and asking needs 2026-07-28";
+                return Error($"This action needs the user's confirmation, and this MCP client cannot ask for it: {why}. Nothing was done.");
             }
 
             await Audit(name, user, AgentDecision.ConfirmationRequested, summary, hash, null, cancellationToken);
@@ -119,10 +140,60 @@ internal sealed partial class ConfirmationFilter(
         };
     }
 
-    private string Message(ConfirmationMetadata? confirmation, IAgentToolMetadata tool, IDictionary<string, JsonElement>? arguments)
+    /// <summary>
+    /// A tool that needs approval: the first call opens an approval and answers with its link; later identical calls
+    /// say it is still pending, report a rejection once, or run it once approved. Each approval is consumed by one call.
+    /// </summary>
+    private async ValueTask<CallToolResult> ApproveAsync(
+        RequestContext<CallToolRequestParams> context,
+        McpRequestHandler<CallToolRequestParams, CallToolResult> next,
+        string name, string? user, string hash, string message, ApprovalSettings settings, CancellationToken cancellationToken)
+    {
+        var store = approvals.Store;
+        var open = await store.FindOpenAsync(name, hash, user, cancellationToken);
+        if (open is not null && open.Expires <= time.GetUtcNow()) open = null;
+
+        if (open is null)
+        {
+            var created = await approvals.RequestAsync(name, hash, user, message, settings, cancellationToken);
+            await Audit(name, user, AgentDecision.ApprovalRequested, message, hash, null, cancellationToken);
+            return Error(Waiting(created, isNew: true));
+        }
+
+        switch (open.Status)
+        {
+            case AgentApprovalStatus.Pending:
+                return Error(Waiting(open, isNew: false));
+
+            case AgentApprovalStatus.Rejected:
+                await store.TryReplaceAsync(open, open with { Consumed = true, Version = open.Version + 1 }, cancellationToken);
+                return Error($"Rejected by {open.RejectedBy}. Nothing was done; do not try again unless the user asks.");
+
+            default:
+                // Consume first: two retries at once must not both run it.
+                if (!await store.TryReplaceAsync(open, open with { Consumed = true, Version = open.Version + 1 }, cancellationToken))
+                    return Error("This approval was just used by another call. Nothing was done twice.");
+                var result = await next(context, cancellationToken);
+                await Audit(name, user, AgentDecision.Approved, message, hash, Succeeded(result), cancellationToken);
+                return result;
+        }
+    }
+
+    private string Waiting(AgentApproval approval, bool isNew)
+    {
+        var who = approval.RequesterOnly
+            ? "Ask the user to open this link and approve"
+            : approval.RequiredApprovals > 1
+                ? $"It needs {approval.RequiredApprovals} different approvers ({approval.ApprovedBy.Count} so far): share this link with them"
+                : "Ask an approver to open this link";
+        return $"Approval required{(isNew ? string.Empty : ", still pending")}: nothing was done yet. {who}: {approvals.Link(approval)} " +
+               $"When it is approved, call this tool again with the same arguments. It expires at {approval.Expires.ToString("u", System.Globalization.CultureInfo.InvariantCulture)}.";
+    }
+
+    private string Message(Func<JsonElement, JsonSerializerOptions, string>? render, IAgentToolMetadata tool, IDictionary<string, JsonElement>? arguments)
     {
         var fallback = $"An AI agent wants to run '{tool.Name}': {tool.Description}";
-        if (confirmation?.Message is not { } render) return fallback;
+        if (render is null) return fallback;
         try
         {
             using var document = JsonDocument.Parse(JsonSerializer.Serialize(arguments ?? new Dictionary<string, JsonElement>(), ArgumentsContext.Default.IDictionaryStringJsonElement));
@@ -140,11 +211,6 @@ internal sealed partial class ConfirmationFilter(
         audit.WriteAsync(new AgentAuditEntry(time.GetUtcNow(), tool, user, decision, summary, hash, succeeded), cancellationToken);
 
     private static bool Succeeded(CallToolResult result) => result.IsError is not true;
-
-    private static string? UserOf(ClaimsPrincipal? user) =>
-        user?.Identity?.IsAuthenticated == true
-            ? user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.Identity.Name
-            : null;
 
     private static CallToolResult Error(string message) => new()
     {

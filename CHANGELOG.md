@@ -3,6 +3,24 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Keel.Endpoints.Agents: approval by other people.** `RequireApproval(message)` / `RequireApproval<TRequest>(r => ...)`:
+  the agent gets an approval link instead of a result; approvers decide on the page `MapKeelApprovals()` serves
+  (`/approvals/{id}`), and the agent's next identical call runs the endpoint once. Four eyes by default
+  (`RequesterMayApprove`), an authorization `Policy` and several different approvers (`Approvals`) when needed;
+  bound to the tool, the arguments and the caller; expires (`ApprovalLifetime`). The page sets CSP, `frame-ancestors
+  'none'`, `no-referrer` and `no-store`, and takes the decision as JSON only. Approvals live in an
+  `IAgentApprovalStore` (in memory by default) with optimistic concurrency. The host does not start if approvals are
+  needed and the pages are not mapped.
+- `KeelAgentsOptions.WhenClientCannotConfirm = ConfirmationFallback.Approval`: a client that cannot show a
+  confirmation gets a link that only the same user can approve, instead of a refusal.
+- New audit decisions: `ApprovalRequested`, `ApprovalGranted`, `ApprovalRejected`, `Approved`.
+
+### Changed
+- The refusal when a client cannot confirm names the protocol revision it connected with.
+
 ## [1.0.0-rc.5] - 2026-10-31
 
 ### Fixed
