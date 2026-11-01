@@ -24,6 +24,8 @@ public sealed class Endpoint(...) : Endpoint<RechazarSolicitud>
 | Default | Every tool with `Destructive = true` asks; `RequireConfirmation` adds others, `WithoutConfirmation()` opts out |
 | Fail-closed | No answer, a declined answer or a client that cannot ask: the endpoint does not run |
 | Tamper-proof | The pending confirmation is signed (Data Protection), expires (10 minutes) and is bound to the tool, its arguments and the user |
-| Audit | Every agent call that changes data, and every confirmation, goes to `IAgentAuditSink` (the log by default) |
+| Approval | `RequireApproval(...)`: people approve through a link (`MapKeelApprovals()`), four eyes by default, a policy and several approvers if needed; the approved call runs once |
+| Fallback | `WhenClientCannotConfirm = ConfirmationFallback.Approval`: a client that cannot show the confirmation gets a link the same user approves |
+| Audit | Every agent call that changes data, every confirmation and every approval goes to `IAgentAuditSink` (the log by default) |
 
 See the [agents guide](https://github.com/amondejar/keel-endpoints/blob/main/docs/agents.md).

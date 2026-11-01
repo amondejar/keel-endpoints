@@ -1,33 +1,85 @@
+Keel.Endpoints.Agents.AgentApprovalStatus.Approved
+Keel.Endpoints.Agents.AgentApprovalStatus.Pending
+Keel.Endpoints.Agents.AgentApprovalStatus.Rejected
+Keel.Endpoints.Agents.AgentDecision.ApprovalGranted
+Keel.Endpoints.Agents.AgentDecision.ApprovalRejected
+Keel.Endpoints.Agents.AgentDecision.ApprovalRequested
+Keel.Endpoints.Agents.AgentDecision.Approved
 Keel.Endpoints.Agents.AgentDecision.ConfirmationRequested
 Keel.Endpoints.Agents.AgentDecision.Confirmed
 Keel.Endpoints.Agents.AgentDecision.Declined
 Keel.Endpoints.Agents.AgentDecision.NotRequired
 Keel.Endpoints.Agents.AgentDecision.Refused
+Keel.Endpoints.Agents.ConfirmationFallback.Approval
+Keel.Endpoints.Agents.ConfirmationFallback.Refuse
+enum Keel.Endpoints.Agents.AgentApprovalStatus
 enum Keel.Endpoints.Agents.AgentDecision
+enum Keel.Endpoints.Agents.ConfirmationFallback
+interface Keel.Endpoints.Agents.IAgentApprovalStore
 interface Keel.Endpoints.Agents.IAgentAuditSink
+public Keel.Endpoints.Agents.AgentApproval()
+public Keel.Endpoints.Agents.AgentApprovalOptions()
+public Keel.Endpoints.Agents.AgentApprovalStatus Keel.Endpoints.Agents.AgentApproval.Status { get; init; }
 public Keel.Endpoints.Agents.AgentAuditEntry(System.DateTimeOffset Time, string Tool, string? User, Keel.Endpoints.Agents.AgentDecision Decision, string? Summary, string ArgumentsHash, bool? Succeeded)
 public Keel.Endpoints.Agents.AgentDecision Keel.Endpoints.Agents.AgentAuditEntry.Decision { get; init; }
+public Keel.Endpoints.Agents.ConfirmationFallback Keel.Endpoints.Agents.KeelAgentsOptions.WhenClientCannotConfirm { get; set; }
 public Keel.Endpoints.Agents.KeelAgentsOptions()
+public System.Collections.Generic.IReadOnlyList<string> Keel.Endpoints.Agents.AgentApproval.ApprovedBy { get; init; }
 public System.DateTimeOffset Keel.Endpoints.Agents.AgentAuditEntry.Time { get; init; }
+public System.TimeSpan Keel.Endpoints.Agents.KeelAgentsOptions.ApprovalLifetime { get; set; }
 public System.TimeSpan Keel.Endpoints.Agents.KeelAgentsOptions.ConfirmationLifetime { get; set; }
+public System.TimeSpan? Keel.Endpoints.Agents.AgentApprovalOptions.Lifetime { get; set; }
+public System.Uri? Keel.Endpoints.Agents.KeelAgentsOptions.ApprovalsUrl { get; set; }
+public abstract System.Threading.Tasks.ValueTask Keel.Endpoints.Agents.IAgentApprovalStore.AddAsync(Keel.Endpoints.Agents.AgentApproval approval, System.Threading.CancellationToken cancellationToken)
 public abstract System.Threading.Tasks.ValueTask Keel.Endpoints.Agents.IAgentAuditSink.WriteAsync(Keel.Endpoints.Agents.AgentAuditEntry entry, System.Threading.CancellationToken cancellationToken)
+public abstract System.Threading.Tasks.ValueTask<Keel.Endpoints.Agents.AgentApproval?> Keel.Endpoints.Agents.IAgentApprovalStore.FindOpenAsync(string tool, string argumentsHash, string? requestedBy, System.Threading.CancellationToken cancellationToken)
+public abstract System.Threading.Tasks.ValueTask<Keel.Endpoints.Agents.AgentApproval?> Keel.Endpoints.Agents.IAgentApprovalStore.GetAsync(string id, System.Threading.CancellationToken cancellationToken)
+public abstract System.Threading.Tasks.ValueTask<bool> Keel.Endpoints.Agents.IAgentApprovalStore.TryReplaceAsync(Keel.Endpoints.Agents.AgentApproval current, Keel.Endpoints.Agents.AgentApproval updated, System.Threading.CancellationToken cancellationToken)
+public bool Keel.Endpoints.Agents.AgentApproval.Consumed { get; init; }
+public bool Keel.Endpoints.Agents.AgentApproval.Equals(Keel.Endpoints.Agents.AgentApproval? other)
+public bool Keel.Endpoints.Agents.AgentApproval.RequesterMayApprove { get; init; }
+public bool Keel.Endpoints.Agents.AgentApproval.RequesterOnly { get; init; }
+public bool Keel.Endpoints.Agents.AgentApprovalOptions.RequesterMayApprove { get; set; }
 public bool Keel.Endpoints.Agents.AgentAuditEntry.Equals(Keel.Endpoints.Agents.AgentAuditEntry? other)
 public bool Keel.Endpoints.Agents.KeelAgentsOptions.ConfirmDestructiveTools { get; set; }
 public bool? Keel.Endpoints.Agents.AgentAuditEntry.Succeeded { get; init; }
+public int Keel.Endpoints.Agents.AgentApproval.RequiredApprovals { get; init; }
+public int Keel.Endpoints.Agents.AgentApproval.Version { get; init; }
+public int Keel.Endpoints.Agents.AgentApprovalOptions.Approvals { get; set; }
+public override bool Keel.Endpoints.Agents.AgentApproval.Equals(object? obj)
 public override bool Keel.Endpoints.Agents.AgentAuditEntry.Equals(object? obj)
+public override int Keel.Endpoints.Agents.AgentApproval.GetHashCode()
 public override int Keel.Endpoints.Agents.AgentAuditEntry.GetHashCode()
+public override string Keel.Endpoints.Agents.AgentApproval.ToString()
 public override string Keel.Endpoints.Agents.AgentAuditEntry.ToString()
+public required System.DateTimeOffset Keel.Endpoints.Agents.AgentApproval.Created { get; init; }
+public required System.DateTimeOffset Keel.Endpoints.Agents.AgentApproval.Expires { get; init; }
+public required string Keel.Endpoints.Agents.AgentApproval.ArgumentsHash { get; init; }
+public required string Keel.Endpoints.Agents.AgentApproval.Id { get; init; }
+public required string Keel.Endpoints.Agents.AgentApproval.Message { get; init; }
+public required string Keel.Endpoints.Agents.AgentApproval.Tool { get; init; }
+public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.RequireApproval(this Keel.Endpoints.EndpointOptions options, string message, System.Action<Keel.Endpoints.Agents.AgentApprovalOptions>? configure = null)
+public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.RequireApproval<TRequest>(this Keel.Endpoints.EndpointOptions options, System.Func<TRequest, string> message, System.Action<Keel.Endpoints.Agents.AgentApprovalOptions>? configure = null)
 public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.RequireConfirmation(this Keel.Endpoints.EndpointOptions options, string message)
 public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.RequireConfirmation<TRequest>(this Keel.Endpoints.EndpointOptions options, System.Func<TRequest, string> message)
 public static Keel.Endpoints.EndpointOptions Keel.Endpoints.AgentEndpointOptionsExtensions.WithoutConfirmation(this Keel.Endpoints.EndpointOptions options)
+public static Microsoft.AspNetCore.Routing.RouteGroupBuilder Keel.Endpoints.Agents.KeelAgentsExtensions.MapKeelApprovals(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder app, string pattern = "/approvals")
 public static Microsoft.Extensions.DependencyInjection.IServiceCollection Keel.Endpoints.Agents.KeelAgentsExtensions.AddKeelAgents(this Microsoft.Extensions.DependencyInjection.IServiceCollection services, System.Action<Keel.Endpoints.Agents.KeelAgentsOptions>? configure = null)
+public static bool Keel.Endpoints.Agents.AgentApproval.op_Equality(Keel.Endpoints.Agents.AgentApproval? left, Keel.Endpoints.Agents.AgentApproval? right)
+public static bool Keel.Endpoints.Agents.AgentApproval.op_Inequality(Keel.Endpoints.Agents.AgentApproval? left, Keel.Endpoints.Agents.AgentApproval? right)
 public static bool Keel.Endpoints.Agents.AgentAuditEntry.op_Equality(Keel.Endpoints.Agents.AgentAuditEntry? left, Keel.Endpoints.Agents.AgentAuditEntry? right)
 public static bool Keel.Endpoints.Agents.AgentAuditEntry.op_Inequality(Keel.Endpoints.Agents.AgentAuditEntry? left, Keel.Endpoints.Agents.AgentAuditEntry? right)
 public string Keel.Endpoints.Agents.AgentAuditEntry.ArgumentsHash { get; init; }
 public string Keel.Endpoints.Agents.AgentAuditEntry.Tool { get; init; }
+public string? Keel.Endpoints.Agents.AgentApproval.Policy { get; init; }
+public string? Keel.Endpoints.Agents.AgentApproval.RejectedBy { get; init; }
+public string? Keel.Endpoints.Agents.AgentApproval.RequestedBy { get; init; }
+public string? Keel.Endpoints.Agents.AgentApprovalOptions.Policy { get; set; }
 public string? Keel.Endpoints.Agents.AgentAuditEntry.Summary { get; init; }
 public string? Keel.Endpoints.Agents.AgentAuditEntry.User { get; init; }
 public void Keel.Endpoints.Agents.AgentAuditEntry.Deconstruct(out System.DateTimeOffset Time, out string Tool, out string? User, out Keel.Endpoints.Agents.AgentDecision Decision, out string? Summary, out string ArgumentsHash, out bool? Succeeded)
+sealed class Keel.Endpoints.Agents.AgentApproval : System.IEquatable<Keel.Endpoints.Agents.AgentApproval>
+sealed class Keel.Endpoints.Agents.AgentApprovalOptions
 sealed class Keel.Endpoints.Agents.AgentAuditEntry : System.IEquatable<Keel.Endpoints.Agents.AgentAuditEntry>
 sealed class Keel.Endpoints.Agents.KeelAgentsOptions
 static class Keel.Endpoints.AgentEndpointOptionsExtensions
