@@ -187,3 +187,86 @@ namespace Keel.Endpoints.Tests.McpFixtures.Grouped
         public override Task<string> HandleAsync(CancellationToken ct) => Task.FromResult("x");
     }
 }
+
+// Lean results: a list with nullable members and non-ASCII text, where compaction, caps, field selection and the
+// table format show.
+namespace Keel.Endpoints.Tests.McpFixtures.Members
+{
+    public sealed record MemberView(int Id, string Name, string City, string? Email, string? Note);
+
+    public static class MemberData
+    {
+        public static readonly MemberView[] All =
+        [
+            .. Enumerable.Range(1, 12).Select(i => new MemberView(
+                i,
+                i % 2 == 0 ? $"María Núñez {i}" : $"Jordi Puig {i}",
+                i % 3 == 0 ? "Málaga" : "Barcelona",
+                i % 4 == 0 ? $"m{i}@example.com" : null,
+                i == 5 ? "VIP, \"gold\"" : null)),
+        ];
+    }
+}
+
+namespace Keel.Endpoints.Tests.McpFixtures.Members.List
+{
+    public sealed record ListMembers(string? City);
+
+    [Get("members"), AllowAnonymous]
+    public sealed class Endpoint : Endpoint<ListMembers, MemberView[]>
+    {
+        public override void Configure(EndpointOptions options) => options.ExposeAsTool("Lists the members, optionally of one city.");
+
+        public override Task<MemberView[]> HandleAsync(ListMembers request, CancellationToken ct) =>
+            Task.FromResult(MemberData.All.Where(m => request.City is null || m.City == request.City).ToArray());
+    }
+}
+
+namespace Keel.Endpoints.Tests.McpFixtures.Members.Table
+{
+    public sealed record ListMemberRows(string? City);
+
+    // Every result option on the tool itself.
+    [Get("members/table"), AllowAnonymous]
+    public sealed class Endpoint : Endpoint<ListMemberRows, MemberView[]>
+    {
+        public override void Configure(EndpointOptions options) => options.ExposeAsTool("Lists the members as a table.", tool =>
+        {
+            tool.Format = Keel.Endpoints.Mcp.McpResultFormat.Table;
+            tool.MaxItems = 5;
+            tool.FieldSelection = true;
+        });
+
+        public override Task<MemberView[]> HandleAsync(ListMemberRows request, CancellationToken ct) =>
+            Task.FromResult(MemberData.All.Where(m => request.City is null || m.City == request.City).ToArray());
+    }
+}
+
+namespace Keel.Endpoints.Tests.McpFixtures.Members.Get
+{
+    public sealed record GetMember(int Id);
+
+    [Get("members/{id}"), AllowAnonymous]
+    public sealed class Endpoint : Endpoint<GetMember, MemberView>
+    {
+        public override void Configure(EndpointOptions options) => options.ExposeAsTool("Gets a member.", tool => tool.FieldSelection = true);
+
+        public override Task<MemberView> HandleAsync(GetMember request, CancellationToken ct) =>
+            Task.FromResult(MemberData.All.Single(m => m.Id == request.Id));
+    }
+}
+
+namespace Keel.Endpoints.Tests.McpFixtures.Members.BadCap
+{
+    public sealed record GetFirstMember(int Id);
+
+    // MaxItems on a result that is not a list: a mistake the host reports at startup.
+    [Get("members/first/{id}"), AllowAnonymous]
+    public sealed class Endpoint : Endpoint<GetFirstMember, MemberView>
+    {
+        public override void Configure(EndpointOptions options) => options.ExposeAsTool("Gets the first member.", tool => tool.MaxItems = 5);
+
+        public override Task<MemberView> HandleAsync(GetFirstMember request, CancellationToken ct) =>
+            Task.FromResult(MemberData.All[0]);
+    }
+}

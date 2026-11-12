@@ -3,6 +3,24 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Keel.Endpoints.Mcp: lean results.** The text the model reads is compact by default (no null members, no
+  indentation). `KeelMcpOptions.Results` and per-tool `ExposeAsTool` options add `MaxItems` (cut long lists and tell
+  the agent which arguments narrow the call), `FieldSelection` (an optional `fields` argument) and
+  `Format = McpResultFormat.Table` (lists as TOON tables). Structured content keeps matching the output schema.
+  On a 50-item list: −26 % tokens by default, up to −79 % with fields and the table format.
+
+### Changed
+- **Keel.Endpoints.Mcp**: optional request members (nullable, or with a default) are no longer listed as `required`
+  in input schemas, so agents may leave out filters such as `string? Customer`. Route values, `[Required]` and C#
+  `required` members still are.
+- **Keel.Endpoints.Mcp**: numbers are plain `number` / `integer` in tool schemas, without the string alternative and
+  pattern the web JSON defaults add (−39 % on a typical list tool's definition).
+- **Keel.Endpoints.Mcp**: tool result text is compact JSON. Set `KeelMcpOptions.Results.Compact = false` to send the
+  endpoint's body as it is.
+
 ## [1.0.0-rc.7] - 2026-11-01
 
 ### Added

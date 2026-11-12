@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
@@ -32,6 +33,9 @@ internal sealed class McpTool
 
     /// <summary>The JSON name of the member marked <c>[FromBody]</c> in a parameter-bound contract, if any.</summary>
     public string? BodyMember { get; init; }
+
+    /// <summary>How results are written for the model.</summary>
+    public required ResultShape Shape { get; init; }
 }
 
 /// <summary>
@@ -39,7 +43,7 @@ internal sealed class McpTool
 /// rules (a write says whether it is destructive, names are unique, streams are not tools), so a mistake stops the host
 /// at startup like Keel's own checks.
 /// </summary>
-internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<JsonOptions> json)
+internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<JsonOptions> json, IOptions<KeelMcpOptions> mcp)
 {
     private readonly Lock _gate = new();
     private (IReadOnlyList<Endpoint> Source, IReadOnlyDictionary<string, McpTool> Tools)? _built;
@@ -67,6 +71,10 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
     private Dictionary<string, McpTool> Build(IReadOnlyList<Endpoint> endpoints)
     {
         var options = json.Value.SerializerOptions;
+        // Schemas describe what an agent should send and will get: numbers as numbers. The web defaults also read
+        // numbers written as strings, which turns every number into ["string","integer"] plus a pattern in the schemas
+        // that are sent on every turn.
+        var schemas = new JsonSerializerOptions(options) { NumberHandling = JsonNumberHandling.Strict };
         var tools = new Dictionary<string, McpTool>(StringComparer.Ordinal);
         var errors = new List<string>();
 
@@ -135,13 +143,15 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
                 }
             }
 
-            var outputSchema = shape.Response is null ? null : Schemas.Output(options.GetTypeInfo(shape.Response));
+            var outputSchema = shape.Response is null ? null : Schemas.Output(schemas.GetTypeInfo(shape.Response));
+            var inputSchema = Schemas.Input(shape.Request is null ? null : schemas.GetTypeInfo(shape.Request), routeParameters);
+            var results = Results(exposed.Options, outputSchema, ref inputSchema, request, where, errors);
             var protocol = new Tool
             {
                 Name = name,
                 Title = exposed.Options.Title,
                 Description = exposed.Description,
-                InputSchema = Schemas.Input(request, routeParameters),
+                InputSchema = inputSchema,
                 OutputSchema = outputSchema,
                 Annotations = new ToolAnnotations
                 {
@@ -179,6 +189,7 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
                 RouteParameters = routeParameters,
                 Headers = headers,
                 BodyMember = bodyMember,
+                Shape = results,
             };
         }
 
@@ -188,6 +199,51 @@ internal sealed partial class ToolTable(EndpointDataSource dataSource, IOptions<
         }
 
         return tools;
+    }
+
+    /// <summary>
+    /// How the tool's results are written: the server defaults, overridden by the tool. Field selection adds the
+    /// <c>fields</c> argument to the input schema. A setting the result cannot honor stops the host at startup.
+    /// </summary>
+    private ResultShape Results(McpToolOptions tool, JsonElement? output, ref JsonElement input, JsonTypeInfo? request, string where, List<string> errors)
+    {
+        var defaults = mcp.Value.Results;
+        var maxItems = tool.MaxItems ?? defaults.MaxItems;
+        var fieldSelection = tool.FieldSelection ?? defaults.FieldSelection;
+        var format = tool.Format ?? defaults.Format;
+        var isList = output is { } schema && Schemas.IsArray(schema);
+
+        if (maxItems is <= 0) errors.Add($"{where}: MaxItems must be at least 1.");
+        if (tool.MaxItems is not null && !isList) errors.Add($"{where}: MaxItems applies to list results, and this tool's result is not a list.");
+        if (tool.Format == McpResultFormat.Table && !isList) errors.Add($"{where}: Format = Table applies to list results, and this tool's result is not a list.");
+
+        IReadOnlyList<string>? fields = null;
+        if (fieldSelection && output is { } shape && Schemas.ItemProperties(shape) is { Count: > 0 } names)
+        {
+            if (request?.Properties.Any(p => string.Equals(p.Name, Schemas.FieldsArgument, StringComparison.OrdinalIgnoreCase)) == true)
+            {
+                // Only a tool's own setting is a mistake; a server-wide default just skips this tool.
+                if (tool.FieldSelection == true)
+                    errors.Add($"{where}: the request already has a '{Schemas.FieldsArgument}' member, so FieldSelection would clash with it. Rename the member or turn FieldSelection off for this tool.");
+            }
+            else
+            {
+                fields = names;
+                input = Schemas.AddFields(input, names);
+            }
+        }
+        else if (tool.FieldSelection == true)
+        {
+            errors.Add($"{where}: FieldSelection needs a result that is an object, or a list of objects, with known members.");
+        }
+
+        return new ResultShape(
+            defaults.Compact,
+            isList ? maxItems : null,
+            fields,
+            isList ? format : McpResultFormat.Json,
+            output is { } required ? Schemas.RequiredNames(required) : new HashSet<string>(),
+            Schemas.Optional(input));
     }
 
     /// <summary>The same rule as Keel's binding: POST, PUT and PATCH read the body unless the contract says otherwise.</summary>

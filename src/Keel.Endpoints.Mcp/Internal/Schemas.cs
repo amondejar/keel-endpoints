@@ -30,19 +30,30 @@ internal static class Schemas
         // A tool's input is always an object.
         schema["type"] = "object";
 
-        var existing = schema["required"] as JsonArray;
-        var required = existing ?? [];
-        var names = required.Select(n => n?.GetValue<string>()).ToHashSet(StringComparer.Ordinal);
+        // The exporter lists every constructor parameter as required. A member the agent may leave out is not: a nullable
+        // one or one with a default (filters such as "string? Customer"), unless it is in the route, [Required] or
+        // C# required. Listing those tells the agent it must send them, and it does, on every call.
+        var names = (schema["required"] as JsonArray ?? []).Select(n => n?.GetValue<string>()).OfType<string>().ToHashSet(StringComparer.Ordinal);
+        var properties = schema["properties"] as JsonObject;
         foreach (var property in request?.Properties ?? [])
         {
             var routeValue = routeParameters.Contains(property.Name, StringComparer.OrdinalIgnoreCase);
-            if ((property.IsRequired || routeValue || Attributes(property).OfType<RequiredAttribute>().Any()) && names.Add(property.Name))
+            if (property.IsRequired || routeValue || Attributes(property).OfType<RequiredAttribute>().Any())
             {
-                required.Add((JsonNode)JsonValue.Create(property.Name));
+                names.Add(property.Name);
+            }
+            else if (property.AssociatedParameter is { HasDefaultValue: true }
+                     || (properties?[property.Name] is JsonObject member && HasType(member, "null")))
+            {
+                names.Remove(property.Name);
             }
         }
 
-        if (existing is null && required.Count > 0) schema["required"] = required;
+        // Keep the declaration order of the members.
+        var ordered = (request?.Properties ?? []).Select(p => p.Name).Where(names.Contains).ToList();
+        ordered.AddRange(names.Except(ordered).Order(StringComparer.Ordinal));
+        if (ordered.Count > 0) schema["required"] = new JsonArray([.. ordered.Select(n => (JsonNode)JsonValue.Create(n))]);
+        else schema.Remove("required");
         return ToElement(schema);
     }
 
@@ -54,6 +65,88 @@ internal static class Schemas
         {
             JsonValueKind.String => type.GetString() == "object",
             JsonValueKind.Array => type.EnumerateArray().Any(t => t.GetString() == "object") && type.EnumerateArray().All(t => t.GetString() is "object" or "null"),
+            _ => false,
+        };
+
+    /// <summary>The argument field selection adds to a tool.</summary>
+    public const string FieldsArgument = "fields";
+
+    public static bool IsArray(JsonElement schema) => HasType(schema, "array");
+
+    /// <summary>The members of the result: of the object, or of the objects in the list. Empty when unknown.</summary>
+    public static IReadOnlyList<string> ItemProperties(JsonElement schema)
+    {
+        var item = IsArray(schema) && schema.TryGetProperty("items", out var items) ? items : schema;
+        return item.ValueKind == JsonValueKind.Object && HasType(item, "object") && item.TryGetProperty("properties", out var properties)
+            ? properties.EnumerateObject().Select(p => p.Name).ToList()
+            : [];
+    }
+
+    /// <summary>Every member name some object in the schema requires: shaping never removes those.</summary>
+    public static IReadOnlySet<string> RequiredNames(JsonElement schema)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        Collect(schema);
+        return names;
+
+        void Collect(JsonElement node)
+        {
+            switch (node.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    foreach (var property in node.EnumerateObject())
+                    {
+                        if (property.Name == "required" && property.Value.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var name in property.Value.EnumerateArray())
+                                if (name.ValueKind == JsonValueKind.String) names.Add(name.GetString()!);
+                        }
+                        else
+                        {
+                            Collect(property.Value);
+                        }
+                    }
+
+                    break;
+                case JsonValueKind.Array:
+                    foreach (var element in node.EnumerateArray()) Collect(element);
+                    break;
+            }
+        }
+    }
+
+    /// <summary>The input schema with the optional <c>fields</c> argument: an array of the result's member names.</summary>
+    public static JsonElement AddFields(JsonElement input, IReadOnlyList<string> names)
+    {
+        var schema = JsonNode.Parse(input.GetRawText())!.AsObject();
+        if (schema["properties"] is not JsonObject properties) schema["properties"] = properties = new JsonObject();
+        properties[FieldsArgument] = new JsonObject
+        {
+            ["type"] = "array",
+            ["items"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray([.. names.Select(n => (JsonNode)JsonValue.Create(n))]) },
+            ["description"] = "Only these members in the result. Ask only for what you need: a smaller result costs less on every later turn. All members when omitted.",
+        };
+        return ToElement(schema);
+    }
+
+    /// <summary>The arguments an agent can add to narrow a call: the optional ones, but <c>fields</c>.</summary>
+    public static IReadOnlyList<string> Optional(JsonElement input)
+    {
+        if (!input.TryGetProperty("properties", out var properties) || properties.ValueKind != JsonValueKind.Object) return [];
+        var required = input.TryGetProperty("required", out var list) && list.ValueKind == JsonValueKind.Array
+            ? list.EnumerateArray().Select(n => n.GetString()).ToHashSet(StringComparer.Ordinal)
+            : [];
+        return properties.EnumerateObject()
+            .Select(p => p.Name)
+            .Where(n => !required.Contains(n) && n != FieldsArgument)
+            .ToList();
+    }
+
+    private static bool HasType(JsonElement schema, string type) =>
+        schema.ValueKind == JsonValueKind.Object && schema.TryGetProperty("type", out var value) && value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() == type,
+            JsonValueKind.Array => value.EnumerateArray().Any(t => t.GetString() == type),
             _ => false,
         };
 

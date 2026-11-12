@@ -15,4 +15,10 @@ public sealed class KeelMcpOptions
     /// published by default.
     /// </summary>
     public McpServerCard? ServerCard { get; set; }
+
+    /// <summary>
+    /// How tool results are written for the model: compact JSON by default, and optionally capped lists, field
+    /// selection and a table format. Each tool can override them in its <c>ExposeAsTool</c> options.
+    /// </summary>
+    public McpToolResultOptions Results { get; } = new();
 }

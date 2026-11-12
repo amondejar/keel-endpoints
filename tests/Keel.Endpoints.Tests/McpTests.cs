@@ -312,6 +312,130 @@ internal static class McpTests
             Assert.True(grouped.Message.Contains("endpoint group"), grouped.Message);
         });
 
+        Test("MCP schemas: optional filters are not required, and numbers are plain numbers", async () =>
+        {
+            await using var app = await StartAsync();
+            await using var client = await Client(app);
+
+            var search = (await client.ListToolsAsync()).Single(t => t.Name == "invoices_search").ProtocolTool;
+            var properties = search.InputSchema.GetProperty("properties");
+
+            // "string? Customer" and "decimal? MinAmount" are filters: an agent may leave them out.
+            Assert.True(!search.InputSchema.TryGetProperty("required", out _));
+            Assert.Equal("[\"number\",\"null\"]", properties.GetProperty("minAmount").GetProperty("type").GetRawText());
+            Assert.True(!properties.GetProperty("minAmount").TryGetProperty("pattern", out _));
+            Assert.Equal("\"integer\"", search.OutputSchema!.Value.GetProperty("items").GetProperty("properties").GetProperty("id").GetProperty("type").GetRawText());
+        });
+
+        Test("MCP results: compact by default: no nulls, no indentation", async () =>
+        {
+            await using var app = await StartAsync(MapMembers);
+            await using var client = await Client(app);
+
+            var result = await client.CallToolAsync("members_list", new Dictionary<string, object?> { ["city"] = "Málaga" });
+            var text = Text(result);
+
+            Assert.True(text.StartsWith("[{\"id\":3,\"name\":\"Jordi Puig 3\",\"city\":\"Málaga\"}", StringComparison.Ordinal), text);
+            Assert.True(!text.Contains("null", StringComparison.Ordinal), text);
+            Assert.True(!text.Contains("\\u00", StringComparison.Ordinal), text);
+            Assert.Equal(4, result.StructuredContent!.Value.GetArrayLength());
+            // Structured content matches the output schema, which requires every constructor member: nulls stay there.
+            Assert.Equal(JsonValueKind.Null, result.StructuredContent!.Value[0].GetProperty("email").ValueKind);
+        });
+
+        Test("MCP results: Compact = false keeps the endpoint's JSON as it is", async () =>
+        {
+            await using var app = await StartAsync(MapMembers, mcp => mcp.Results.Compact = false);
+            await using var client = await Client(app);
+
+            var text = Text(await client.CallToolAsync("members_list", new Dictionary<string, object?> { ["city"] = "Málaga" }));
+
+            Assert.True(text.Contains("\"email\":null", StringComparison.Ordinal), text);
+        });
+
+        Test("MCP results: MaxItems cuts long lists and says how to narrow the call", async () =>
+        {
+            await using var app = await StartAsync(MapMembers, mcp => mcp.Results.MaxItems = 3);
+            await using var client = await Client(app);
+
+            var result = await client.CallToolAsync("members_list", new Dictionary<string, object?>());
+            var blocks = result.Content.OfType<TextContentBlock>().ToList();
+
+            Assert.Equal(3, result.StructuredContent!.Value.GetArrayLength());
+            Assert.Equal(3, JsonDocument.Parse(blocks[0].Text).RootElement.GetArrayLength());
+            Assert.Equal("Showing the first 3 of 12 items. To see the others, narrow the call with: city.", blocks[1].Text);
+
+            // An object result is never cut.
+            var single = await client.CallToolAsync("members_get", new Dictionary<string, object?> { ["id"] = 2 });
+            Assert.Equal(1, single.Content.Count);
+        });
+
+        Test("MCP results: field selection adds 'fields', returns those members only and rejects unknown ones", async () =>
+        {
+            await using var app = await StartAsync(MapMembers);
+            await using var client = await Client(app);
+
+            var get = (await client.ListToolsAsync()).Single(t => t.Name == "members_get").ProtocolTool;
+            var fields = get.InputSchema.GetProperty("properties").GetProperty("fields");
+            Assert.Equal("id,name,city,email,note", string.Join(",", fields.GetProperty("items").GetProperty("enum").EnumerateArray().Select(e => e.GetString())));
+            Assert.True(!get.InputSchema.GetProperty("required").EnumerateArray().Any(r => r.GetString() == "fields"));
+
+            var result = await client.CallToolAsync("members_get", new Dictionary<string, object?> { ["id"] = 4, ["fields"] = new[] { "Name", "email" } });
+            Assert.Equal("{\"name\":\"María Núñez 4\",\"email\":\"m4@example.com\"}", Text(result));
+            Assert.Equal("María Núñez 4", result.StructuredContent!.Value.GetProperty("name").GetString());
+
+            var wrong = await client.CallToolAsync("members_get", new Dictionary<string, object?> { ["id"] = 4, ["fields"] = new[] { "salary" } });
+            Assert.True(wrong.IsError == true);
+            Assert.True(Text(wrong).StartsWith("400 Bad Request: 'fields' must be a list of member names: id, name, city, email, note.", StringComparison.Ordinal), Text(wrong));
+
+            // Without field selection there is no 'fields' argument.
+            var list = (await client.ListToolsAsync()).Single(t => t.Name == "members_list").ProtocolTool;
+            Assert.True(!list.InputSchema.GetProperty("properties").TryGetProperty("fields", out _));
+        });
+
+        Test("MCP results: Format = Table writes lists as a TOON table; structured content stays JSON", async () =>
+        {
+            await using var app = await StartAsync(MapMembers);
+            await using var client = await Client(app);
+
+            var result = await client.CallToolAsync("members_table", new Dictionary<string, object?> { ["fields"] = new[] { "id", "name", "note" } });
+            var blocks = result.Content.OfType<TextContentBlock>().ToList();
+
+            Assert.Equal(
+                "[5]{id,name,note}:\n  1,Jordi Puig 1,null\n  2,María Núñez 2,null\n  3,Jordi Puig 3,null\n  4,María Núñez 4,null\n  5,Jordi Puig 5,\"VIP, \\\"gold\\\"\"",
+                blocks[0].Text);
+            Assert.Equal("Showing the first 5 of 12 items. To see the others, narrow the call with: city.", blocks[1].Text);
+            Assert.Equal(JsonValueKind.Array, result.StructuredContent!.Value.ValueKind);
+            Assert.Equal("VIP, \"gold\"", result.StructuredContent!.Value[4].GetProperty("note").GetString());
+        });
+
+        Test("MCP results: a result option the result cannot honor stops the host", async () =>
+        {
+            var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                StartAsync(api => api.MapEndpoint<McpFixtures.Members.BadCap.Endpoint>()));
+
+            Assert.True(error.Message.Contains("MaxItems applies to list results", StringComparison.Ordinal), error.Message);
+        });
+
+        Test("MCP results: tables quote what could be misread, and only flat lists are tables", () =>
+        {
+            var rows = (System.Text.Json.Nodes.JsonArray)System.Text.Json.Nodes.JsonNode.Parse(
+                """[{"a":"x","b":"","c":"true","d":"-1","e":"007","f":" pad","g":"a:b","h":1.5,"i":false}]""")!;
+            Assert.Equal("[1]{a,b,c,d,e,f,g,h,i}:\n  x,\"\",\"true\",\"-1\",\"007\",\" pad\",\"a:b\",1.5,false", ResultShaper.Table(rows));
+
+            var nested = (System.Text.Json.Nodes.JsonArray)System.Text.Json.Nodes.JsonNode.Parse("""[{"a":{"b":1}}]""")!;
+            Assert.Equal(null, ResultShaper.Table(nested));
+        });
+
+        Test("MCP results: the model's text drops them, but structured content keeps the members the schema requires", () =>
+        {
+            var shape = new ResultShape(true, null, ["id", "note"], McpResultFormat.Json, new HashSet<string> { "id", "note" }, []);
+            var shaped = ResultShaper.Shape(System.Text.Json.Nodes.JsonNode.Parse("""{"id":1,"name":"x","note":null,"email":null}"""), shape, ["name"]);
+
+            Assert.Equal("{\"name\":\"x\"}", shaped.Text);
+            Assert.Equal("{\"id\":1,\"name\":\"x\",\"note\":null}", shaped.Data!.ToJsonString());
+        });
+
         Test("MCP: tool names are the operation names in snake case", () =>
         {
             Assert.Equal("invoices_get", ToolNames.SnakeCase("InvoicesGet"));
@@ -320,6 +444,13 @@ internal static class McpTests
             Assert.Equal("health", ToolNames.SnakeCase("Health"));
             Assert.True(ToolNames.IsValid("invoices.get-v2") && !ToolNames.IsValid("invoices get"));
         });
+    }
+
+    private static void MapMembers(RouteGroupBuilder api)
+    {
+        api.MapEndpoint<McpFixtures.Members.List.Endpoint>();
+        api.MapEndpoint<McpFixtures.Members.Table.Endpoint>();
+        api.MapEndpoint<McpFixtures.Members.Get.Endpoint>();
     }
 
     private static string Text(CallToolResult result) => string.Concat(result.Content.OfType<TextContentBlock>().Select(c => c.Text));
