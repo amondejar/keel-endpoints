@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0-rc.8] - 2026-11-12
 
 ### Added
 - **Keel.Endpoints.Mcp: lean results.** The text the model reads is compact by default (no null members, no

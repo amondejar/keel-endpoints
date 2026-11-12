@@ -30,10 +30,11 @@ Keel.Endpoints follows [Semantic Versioning](https://semver.org/). From 1.0:
 
 ## The road to 1.0
 
-`1.0.0-rc.1` is the candidate: the public API of every package is what 1.0.0 will ship (it has not changed
-since `1.0.0-preview.6`). It fixes what showed up building a full application on the previews, and 1.0.0
-follows unless a release candidate turns up a problem; a fix that changes the public API would need another
-release candidate.
+The release candidates fix what showed up building full applications and agents on Keel. Since `1.0.0-rc.1` the
+public API has only grown (approvals and idempotent retries for agents in rc.6 and rc.7, lean tool results in rc.8):
+no line of a `PublicAPI.txt` has been removed or changed. 1.0.0 will be the last release candidate as it is, once
+one has been used in real applications without needing a change to the public API; a fix that changes it needs
+another release candidate.
 
 ## Supported frameworks
 
