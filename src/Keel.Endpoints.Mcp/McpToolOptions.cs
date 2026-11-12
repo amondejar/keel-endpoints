@@ -30,6 +30,21 @@ public sealed class McpToolOptions
     /// <see langword="false"/>: the tool works on this API's own data.
     /// </summary>
     public bool OpenWorld { get; set; }
+
+    /// <summary>
+    /// The most items this tool's list result returns; overrides <see cref="McpToolResultOptions.MaxItems"/>.
+    /// A longer list is cut, and the agent is told how many there were and which arguments narrow the call.
+    /// </summary>
+    public int? MaxItems { get; set; }
+
+    /// <summary>
+    /// Whether the agent can ask for some members only with a <c>fields</c> argument; overrides
+    /// <see cref="McpToolResultOptions.FieldSelection"/>.
+    /// </summary>
+    public bool? FieldSelection { get; set; }
+
+    /// <summary>The text format of this tool's results; overrides <see cref="McpToolResultOptions.Format"/>.</summary>
+    public McpResultFormat? Format { get; set; }
 }
 
 /// <summary>Endpoint metadata added by <c>ExposeAsTool</c>: the endpoint is offered to agents as an MCP tool.</summary>

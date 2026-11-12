@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Http;
@@ -51,7 +52,19 @@ internal sealed class ToolInvoker(ToolTable table, IOptions<KeelMcpOptions> opti
         var authorization = await AuthorizeAsync(tool, caller);
         if (!authorization.Allowed) return Error(authorization.Status, authorization.Message);
 
-        var context = Request(tool, request.Params?.Arguments, caller, cancellationToken);
+        var arguments = request.Params?.Arguments;
+        IReadOnlyList<string>? fields = null;
+        if (tool.Shape.Fields is { } selectable && arguments is not null && Find(arguments, Schemas.FieldsArgument) is { } requested)
+        {
+            // Not an endpoint argument: take it out before binding.
+            arguments = arguments.Where(a => !string.Equals(a.Key, Schemas.FieldsArgument, StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(a => a.Key, a => a.Value);
+            if (Fields(requested, selectable) is not { } chosen)
+                return Error(StatusCodes.Status400BadRequest, $"'{Schemas.FieldsArgument}' must be a list of member names: {string.Join(", ", selectable)}.");
+            fields = chosen;
+        }
+
+        var context = Request(tool, arguments, caller, cancellationToken);
         if (request.Items.TryGetValue(McpToolCall.HeadersItem, out var extra) && extra is IReadOnlyDictionary<string, string> headers)
         {
             foreach (var (header, value) in headers) context.Request.Headers[header] = value;
@@ -79,7 +92,31 @@ internal sealed class ToolInvoker(ToolTable table, IOptions<KeelMcpOptions> opti
             return Error(StatusCodes.Status500InternalServerError, "The operation failed with an unexpected error.");
         }
 
-        return Result(tool, context, wrap: tool.WrapsResult && IsLegacy(request.Server.NegotiatedProtocolVersion));
+        return Result(tool, context, fields, wrap: tool.WrapsResult && IsLegacy(request.Server.NegotiatedProtocolVersion));
+    }
+
+    /// <summary>The requested member names, in the result's spelling; null when one is not a member.</summary>
+    private static IReadOnlyList<string>? Fields(JsonElement requested, IReadOnlyList<string> selectable)
+    {
+        var names = requested.ValueKind switch
+        {
+            JsonValueKind.Array => requested.EnumerateArray().Select(e => e.ValueKind == JsonValueKind.String ? e.GetString() : null).ToList(),
+            // Some clients send a list as one comma-separated string.
+            JsonValueKind.String => requested.GetString()!.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(n => (string?)n).ToList(),
+            JsonValueKind.Null => [],
+            _ => null,
+        };
+        if (names is null) return null;
+
+        var chosen = new List<string>();
+        foreach (var name in names)
+        {
+            var match = selectable.FirstOrDefault(s => string.Equals(s, name, StringComparison.OrdinalIgnoreCase));
+            if (match is null) return null;
+            chosen.Add(match);
+        }
+
+        return chosen;
     }
 
     /// <summary>Protocol revisions before 2026-07-28 require object output schemas (and structured content).</summary>
@@ -188,7 +225,7 @@ internal sealed class ToolInvoker(ToolTable table, IOptions<KeelMcpOptions> opti
         public bool CanHaveBody => true;
     }
 
-    private static CallToolResult Result(McpTool tool, HttpContext context, bool wrap)
+    private CallToolResult Result(McpTool tool, HttpContext context, IReadOnlyList<string>? fields, bool wrap)
     {
         var status = context.Response.StatusCode;
         var body = Encoding.UTF8.GetString(((MemoryStream)context.Response.Body).ToArray());
@@ -205,7 +242,40 @@ internal sealed class ToolInvoker(ToolTable table, IOptions<KeelMcpOptions> opti
             result.Content.Add(new TextContentBlock { Text = "Note: this call had already been made with the same arguments; this is its stored result, and nothing was done again." });
         }
 
-        if (body.Length > 0 && tool.Protocol.OutputSchema is not null && context.Response.ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true)
+        var json = body.Length > 0 && context.Response.ContentType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true;
+        if (json && !tool.Shape.IsVerbatim)
+        {
+            JsonNode? root = null;
+            var parsed = false;
+            try
+            {
+                root = JsonNode.Parse(body);
+                parsed = true;
+            }
+            catch (JsonException)
+            {
+                // Not JSON after all: the text content has it as it is.
+            }
+
+            if (parsed)
+            {
+                var shaped = ResultShaper.Shape(root, tool.Shape, fields);
+                result.Content[0] = new TextContentBlock { Text = shaped.Text };
+                if (shaped.Note is { } note) result.Content.Add(new TextContentBlock { Text = note });
+                if (tool.Protocol.OutputSchema is not null)
+                {
+                    using var shapedDocument = JsonDocument.Parse(shaped.Data?.ToJsonString() ?? "null");
+                    var value = shapedDocument.RootElement.Clone();
+                    result.StructuredContent = wrap ? Wrapped(value) : value;
+                }
+
+                if (logger.IsEnabled(LogLevel.Debug))
+                    logger.LogDebug("MCP tool {Tool}: result of {Before} characters sent as {After}", tool.Name, body.Length, shaped.Text.Length);
+                return result;
+            }
+        }
+
+        if (json && tool.Protocol.OutputSchema is not null)
         {
             try
             {
